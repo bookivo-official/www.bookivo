@@ -1,0 +1,3 @@
+'use strict';
+(function (w) { function fire(){if(w.matchMedia('(prefers-reduced-motion: reduce)').matches)return;const box=document.createElement('div');box.className='confetti';document.body.appendChild(box);const colors=['#1d4ed8','#2f6bea','#1a9be6','#ffffff'];for(let i=0;i<50;i++){const p=document.createElement('i');p.style.left=Math.random()*100+'vw';p.style.background=colors[i%colors.length];p.style.setProperty('--dx',(Math.random()*120-60)+'px');p.style.animationDelay=Math.random()*.3+'s';box.appendChild(p);}setTimeout(()=>box.remove(),1800);}w.Bookivo.Confetti={fire};w.fireConfetti=fire; })(window);
+
