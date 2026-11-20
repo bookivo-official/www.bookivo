@@ -39,14 +39,24 @@ const server=http.createServer((req,res)=>{
         const image=process.env.BOOKIVO_TEST_IMAGES?path.join(process.env.BOOKIVO_TEST_IMAGES,endpoint):path.join(root,book.cover);
         return route.fulfill({path:image,contentType:'image/png',headers:{'access-control-allow-origin':'*'}});
       }
+      if(endpoint==='bv_books')return reply([{id:'book-2'}]);
       if(endpoint==='user')return reply(user);
       if(endpoint==='bv_profiles')return reply({bits:0,welcome_state:'dismissed'});
       if(endpoint==='bv_library')return libraryError?reply({message:'Offline'},503):reply(entries);
-      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);return reply({revision:body.revision+1});}
+      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);return body.action==='checkout'?reply({id:body.id,session:'offline-session'}):reply({revision:body.revision+1});}
       return reply([]);
     });
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(origin+'/books.html');await page.waitForFunction(()=>document.querySelector('#catalogCount')?.textContent.includes('12'));
+    await page.goto(origin+'/BOOK-2/index.html');await page.waitForFunction(()=>window.BookivoBookCanReview===false && document.scripts.length>20);
+    await page.waitForFunction(()=>Array.from(document.scripts).some(s=>s.src.endsWith('/BOOK-2/book.js')));
+    await page.locator('#addToCartBtn').click();await page.waitForFunction(()=>window.Bookivo.CartStore.count()===1);
+    await page.locator('#buyNowBtn').click();await page.locator('#checkoutModal.is-open').waitFor();
+    assert.equal(await page.locator('[data-grand-total]').innerText(),'₹25');
+    await page.locator('#checkoutModal input[name=phone]').fill('9000000000');
+    await page.evaluate(()=>{window.Cashfree=()=>({checkout:async options=>{window.fixtureGatewaySession=options.paymentSessionId;return {};}});});
+    await page.locator('.checkout-submit').click();await page.waitForFunction(()=>window.fixtureGatewaySession==='offline-session');
+    assert.ok(writes.some(w=>w.action==='checkout' && w.books[0]==='book-2' && w.expectedAmount===2500));
     await page.goto(origin+'/my-books.html');await page.locator('.shelf-empty').waitFor();
     assert.equal(await page.locator('.shelf-section').count(),3);assert.equal(await page.locator('.wood-deck > *').count(),18);
     assert.match(await page.locator('.shelf-discovery').getAttribute('href'),/BOOK-2\/index.html/);
