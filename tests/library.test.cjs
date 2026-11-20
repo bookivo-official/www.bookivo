@@ -1,0 +1,44 @@
+// Run with Node and @electric-sql/pglite. The database exists only in memory.
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const {PGlite}=require('@electric-sql/pglite');
+(async()=>{
+  const db=new PGlite(), sql=text=>db.exec(text), one=async text=>(await db.query(text)).rows[0];
+  await sql(`create role anon;create role authenticated;create role service_role bypassrls;
+    create schema auth;create schema storage;create table auth.users(id uuid primary key,raw_user_meta_data jsonb);
+    create function auth.uid() returns uuid language sql stable as 'select current_setting(''app.uid'',true)::uuid';
+    create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+    create table storage.objects(bucket_id text,name text);alter table storage.objects enable row level security;
+    grant usage on schema auth,storage to anon,authenticated;grant select on storage.objects to anon,authenticated;`);
+  const dir=path.join(__dirname,'../supabase/migrations');
+  for(const f of fs.readdirSync(dir).sort()) await sql(fs.readFileSync(path.join(dir,f),'utf8'));
+  const a='10000000-0000-0000-0000-000000000001',b='10000000-0000-0000-0000-000000000002',o='20000000-0000-0000-0000-000000000001';
+  await sql(`insert into auth.users values('${a}','{}'),('${b}','{}');`);
+  const prepare=(total,id=o)=>`select (public.bv_prepare('${a}','${id}',array['book-2'],'',0,${total})).*`;
+  await assert.rejects(()=>db.query(prepare(500)));assert.equal((await one('select count(*) as n from bv_orders')).n,0);
+  assert.equal((await one(prepare(2500))).amount,2500);
+  assert.equal((await one(prepare(2500,'20000000-0000-0000-0000-000000000002'))).id,o);
+  assert.equal((await one('select count(*) as n from bv_library')).n,0);
+  const settle=(status,key,amount=2500)=>db.query(`select bv_settle('${o}','${status}',${amount},'INR','${key}','test')`);
+  await settle('failed','f');assert.equal((await one('select count(*) as n from bv_library')).n,0);
+  await assert.rejects(()=>settle('paid','invalid',2400));await settle('paid','ok');await settle('paid','ok');await settle('failed','late');
+  assert.equal((await one('select count(*) as n from bv_library')).n,1);assert.equal((await one('select status from bv_orders')).status,'paid');
+  await assert.rejects(()=>db.query(`select bv_review('${b}','book-2','Reader',5,'Title','Body')`));
+  await db.query(`select bv_review('${a}','book-2','Reader',5,'Title','Body')`);
+  const progress=(page,state,rev)=>db.query(`select bv_progress('${a}','book-2',${page},'${state}',${rev})`);
+  await progress(17,'currently_reading',0);await assert.rejects(()=>progress(4,'currently_reading',0));await assert.rejects(()=>progress(10,'finished',1));
+  await progress(30,'finished',1);await progress(1,'next_up',2);
+  await sql(`select bv_welcome('${a}',true),bv_welcome('${a}',true);select bv_welcome('${b}',false),bv_welcome('${b}',true)`);
+  assert.equal((await one(`select bits from bv_profiles where id='${a}'`)).bits,10);
+  assert.equal((await one(`select bits from bv_profiles where id='${b}'`)).bits,0);
+  await sql(`insert into storage.objects values ('bookivo-private-books','cinematic-prompts/images/page17.png'),('bookivo-private-books','cinematic-prompts/prompts.json'),('bookivo-private-books','cinematic-prompts/images/page31.png'),('bookivo-private-books','bachelor-cookbook/images/page1.png');set role authenticated;set app.uid='${a}'`);
+  assert.equal((await one('select count(*) as n from storage.objects')).n,2);
+  assert.equal((await one('select count(*) as n from bv_library')).n,1);
+  await assert.rejects(()=>db.query(prepare(2500)));
+  await sql(`set app.uid='${b}'`);assert.equal((await one('select count(*) as n from bv_library')).n,0);
+  assert.equal((await one('select count(*) as n from storage.objects')).n,0);
+  await sql('reset role;set role anon');assert.equal((await one('select count(*) as n from storage.objects')).n,0);
+  await db.close();console.log('PASS: database migration, pricing, retry, settlement, progress, welcome reward and private storage roles');
+})().catch(e=>{console.error(e.message);process.exitCode=1});
+

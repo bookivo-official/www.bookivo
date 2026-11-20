@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOOKIVO Reader</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+
+<div id="readerStatus" role="status"></div>
+<div id="stage">
+    <div id="zoomWrapper">
+        <div id="book"></div>
+    </div>
+</div>
+
+<div id="controls">
+    <div class="btn-row">
+        <button id="prevBtn">◀ Previous</button>
+        <button id="nextBtn">Next ▶</button>
+    </div>
+    <div id="pageNum" aria-live="polite"></div>
+</div>
+
+<!-- Green "copied" alert (shown for 1 second after a prompt is copied) -->
+<div id="copyToast">COPIED SUCCESSFULLY</div>
+
+<!-- Fullscreen image viewer (opened by clicking a page) -->
+<div id="imgViewer">
+    <button aria-label="Close fullscreen" id="viewerClose">✕</button>
+    <button aria-label="Previous page" id="viewerPrev">‹</button>
+    <img id="viewerImg" alt="">
+    <button aria-label="Next page" id="viewerNext">›</button>
+</div>
+
+<!-- Single script: page-flip engine + all custom logic, no CDN required -->
+<script src="new.js"></script><script src="session.js"></script></body></html>

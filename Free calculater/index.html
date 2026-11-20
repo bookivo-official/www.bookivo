@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Free Financial Calculators | BOOKIVO</title>
+  <meta name="description" content="Nine free financial calculators from BOOKIVO: SIP, Step-Up SIP, Lumpsum, Net Worth, SWP, Inflation, Compound Interest, Home Loan EMI and Income Tax.">
+  <meta name="theme-color" content="#0B1F3A">
+  <link rel="stylesheet" href="style.css">
+  <script src="../js/vendor/supabase/supabase.js"></script><script src="../supabase-config.js"></script><script src="access.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#calc-root">Skip to calculators</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="BOOKIVO home">
+        <span class="brand-mark" aria-hidden="true">B</span>
+        <span class="brand-name">BOOKIVO</span>
+      </a>
+      <a class="back-link" href="/">&larr; Back to BOOKIVO</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow">FREE FINANCIAL TOOLS</p>
+      <h1 class="serif">Plan Your Wealth. Make Smarter Decisions.</h1>
+      <p class="hero-desc">Explore free financial calculators designed to help you understand investments, manage liabilities, plan retirement and make better financial decisions.</p>
+      <span class="badge">9 FREE CALCULATORS</span>
+    </div>
+  </section>
+
+  <nav class="calc-nav" aria-label="Choose a calculator">
+    <div class="container">
+      <div class="tabs" role="tablist" aria-label="Financial calculators">
+        <button type="button" class="tab" role="tab" id="tab-sip" data-calc="sip" aria-controls="panel-sip" aria-label="SIP Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg><span>SIP</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-stepup" data-calc="stepup" aria-controls="panel-stepup" aria-label="Step-Up SIP Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"/></svg><span>Step-Up SIP</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-lumpsum" data-calc="lumpsum" aria-controls="panel-lumpsum" aria-label="Lumpsum Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M17 7.5c0-1.7-2.2-3-5-3s-5 1.3-5 3 2.2 3 5 3 5 1.3 5 3-2.2 3-5 3-5-1.3-5-3"/></svg><span>Lumpsum</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-networth" data-calc="networth" aria-controls="panel-networth" aria-label="Assets vs Liabilities">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M6 20h12M4 8h16M7 8l-3 6h6zM17 8l-3 6h6z"/></svg><span>Assets vs Liabilities</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-swp" data-calc="swp" aria-controls="panel-swp" aria-label="SWP Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg><span>SWP</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-inflation" data-calc="inflation" aria-controls="panel-inflation" aria-label="Inflation Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5L5 19M7 5.5a1.5 1.5 0 100 .01M17 18.5a1.5 1.5 0 100 .01"/></svg><span>Inflation</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-compound" data-calc="compound" aria-controls="panel-compound" aria-label="Compound Interest Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c5 0 7-3 9-7s4-8 8-8M4 20h17"/></svg><span>Compound Interest</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-emi" data-calc="emi" aria-controls="panel-emi" aria-label="Home Loan EMI Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6"/></svg><span>Home Loan EMI</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-tax" data-calc="tax" aria-controls="panel-tax" aria-label="Income Tax Calculator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h6"/></svg><span>Income Tax</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="calc-root" class="container">
+    <noscript><p class="noscript">These calculators need JavaScript. Please enable it in your browser to continue.</p></noscript>
+    <section class="panel" role="tabpanel" id="panel-sip" aria-labelledby="tab-sip" data-calc="sip" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-stepup" aria-labelledby="tab-stepup" data-calc="stepup" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-lumpsum" aria-labelledby="tab-lumpsum" data-calc="lumpsum" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-networth" aria-labelledby="tab-networth" data-calc="networth" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-swp" aria-labelledby="tab-swp" data-calc="swp" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-inflation" aria-labelledby="tab-inflation" data-calc="inflation" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-compound" aria-labelledby="tab-compound" data-calc="compound" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-emi" aria-labelledby="tab-emi" data-calc="emi" hidden></section>
+    <section class="panel" role="tabpanel" id="panel-tax" aria-labelledby="tab-tax" data-calc="tax" hidden></section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <p class="footer-brand serif">BOOKIVO</p>
+          <p class="footer-tagline">Read Smarter. Grow Faster. Become Better.</p>
+        </div>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="/">Back to BOOKIVO</a>
+          <a href="/privacy-policy">Privacy Policy</a>
+          <a href="/contact">Contact Us</a>
+          <a href="#disclaimer">Disclaimer</a>
+        </nav>
+      </div>
+      <p class="disclaimer" id="disclaimer"><strong>Disclaimer:</strong> These calculators are intended for educational and informational purposes only. Investment returns, inflation rates and future values are estimates and are not guaranteed. Tax estimates depend on the accuracy of user inputs and applicable laws. This tool does not constitute financial, investment or tax advice.</p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Shared layout used for every calculator. JavaScript clones this and fills it in. -->
+  <template id="calc-template">
+    <article class="calc">
+      <div class="print-only print-head"><strong>BOOKIVO Financial Calculators</strong><span data-ref="printMeta"></span></div>
+
+      <header class="calc-head">
+        <h2 class="serif calc-title" data-ref="title"></h2>
+        <p class="calc-desc" data-ref="desc"></p>
+      </header>
+
+      <div class="calc-grid">
+        <section class="card inputs-card" aria-label="Inputs">
+          <div class="card-head">
+            <h3 class="card-title">Your inputs</h3>
+            <button type="button" class="btn btn-ghost btn-sm" data-ref="reset">&#8634; Reset</button>
+          </div>
+          <div class="presets" data-ref="presets" hidden></div>
+          <form class="fields" data-ref="fields" novalidate autocomplete="off"></form>
+        </section>
+
+        <div class="results-col">
+          <section class="card results-card" aria-label="Results" aria-live="polite">
+            <div class="hero-result">
+              <p class="hero-label" data-ref="mainLabel"></p>
+              <p class="hero-value" data-ref="mainValue"></p>
+              <p class="hero-sub" data-ref="mainSub"></p>
+            </div>
+            <div class="stat-grid" data-ref="stats"></div>
+            <div data-ref="extra"></div>
+            <ul class="notes" data-ref="notes"></ul>
+            <div class="actions" role="group" aria-label="Result actions">
+              <button type="button" class="btn btn-primary btn-sm" data-ref="recalc">Recalculate</button>
+              <button type="button" class="btn btn-outline btn-sm" data-ref="copy">Copy results</button>
+              <button type="button" class="btn btn-outline btn-sm" data-ref="share">Share</button>
+              <button type="button" class="btn btn-outline btn-sm" data-ref="pdf">Download PDF</button>
+            </div>
+          </section>
+          <section class="charts" data-ref="charts" aria-label="Charts"></section>
+        </div>
+      </div>
+
+      <section class="card edu" aria-label="About this calculator">
+        <h3 class="card-title">About this calculator</h3>
+        <div class="edu-grid" data-ref="edu"></div>
+      </section>
+
+      <section class="card faq" aria-label="Frequently asked questions">
+        <h3 class="card-title">Frequently asked questions</h3>
+        <div data-ref="faq"></div>
+      </section>
+    </article>
+  </template>
+</body>
+</html>

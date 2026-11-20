@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bookivo pricing checks</title><link rel="stylesheet" href="../css/tokens.css"><link rel="stylesheet" href="../css/base.css"><style>body{padding:32px}.pass{color:#166534}.fail{color:#b91c1c}li{margin:8px 0}</style></head><body><main class="container"><h1>Bookivo pricing checks</h1><p>Browser checks for the discount rules.</p><p id="summary"></p><ol id="results"></ol></main><script src="../js/lib/pricing.js"></script><script>
+'use strict';
+const P=window.Bookivo.Pricing, results=document.getElementById('results');let passed=0,failed=0;
+function test(name,fn){const li=document.createElement('li');try{fn();li.className='pass';li.textContent='PASS — '+name;passed++;}catch(e){li.className='fail';li.textContent='FAIL — '+name+': '+e.message;failed++;}results.appendChild(li);}
+const d19=new Date('2026-11-18T19:00:00Z'),d18=new Date('2026-11-18T12:00:00Z');
+test('20% absolute cap',()=>{const r=P.calculateOrder({items:[{price:101},{price:149}],mode:'coupon',couponCode:'FESTIVE20',nowIST:d18});r.lines.forEach(x=>{if(x.discount>Math.floor(x.price*.2))throw Error('line exceeded cap');});});
+test('Pages exclude ₹99 and cap eligible line at 19%',()=>{const r=P.calculateOrder({items:[{price:99},{price:299}],mode:'pages',pagesBalance:500,pagesToUse:500,nowIST:d18});if(r.lines[0].discount!==0||r.lines[1].discount!==56)throw Error('wrong Pages calculation');});
+test('19th special uses IST',()=>{if(!P.is19thIST(d19))throw Error('IST date was not the 19th');});
+test('19th special is invalid on other days',()=>{const r=P.calculateOrder({items:[{price:300}],mode:'coupon',couponCode:'TODAY_IS_19',nowIST:d18});if(!r.warnings.length)throw Error('missing invalid-date warning');});
+test('partner code gives 5%',()=>{const r=P.calculateOrder({items:[{price:200}],mode:'coupon',couponCode:'BOOKIVO101',nowIST:d18});if(r.discountTotal!==10)throw Error('wrong partner discount');});
+test('only one discount mode applies',()=>{const r=P.calculateOrder({items:[{price:300}],mode:'pages',pagesBalance:100,pagesToUse:100,couponCode:'FESTIVE20',nowIST:d19});if(r.appliedLabel!=='Bookivo Pages')throw Error('coupon combined with Pages');});
+test('scratch reward odds sum to 100',()=>{if(P.SCRATCH_ODDS.reduce((a,x)=>a+x.weight,0)!==100)throw Error('weights do not sum to 100');});
+document.getElementById('summary').textContent=`${passed} passed · ${failed} failed`;
+</script></body></html>
+

@@ -1,0 +1,443 @@
+/* ===========================================================
+   book.css — all styling for the eBook viewer
+   =========================================================== */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: #ffffff;
+    transition: background 0.6s ease;
+    font-family: sans-serif;
+    touch-action: none; /* let our custom pinch handler control gestures */
+}
+
+#stage {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 90px); /* leave room for bottom bar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#zoomWrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+    transition: transform 0.05s linear;
+}
+
+#book {
+    box-shadow: 0 0 30px rgba(0,0,0,0.35);
+}
+
+.my-page {
+    background: #fff;
+}
+.my-page img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill; /* frame now has the same ratio as the image, so it fills edge to edge */
+    display: block;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: zoom-in;
+}
+
+/* ---------- Front cover (bookpage0.png only) ---------- */
+.my-page.cover-page {
+    background: none;   /* no black frame behind the cover */
+    position: relative;
+    box-shadow: none;
+}
+.my-page.cover-page img {
+    filter: contrast(1.08) saturate(1.05);
+}
+/* faint printed-cardboard grain, purely decorative */
+.my-page.cover-page::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 4px);
+    mix-blend-mode: overlay;
+}
+
+/* ---------- Bottom control bar ---------- */
+#controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    border-top: 2px solid rgba(210,210,210,0.6);
+    transition: background 0.6s ease;
+}
+
+.btn-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+button {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+button:active {
+    transform: translateY(2px) scale(0.97);
+}
+
+/* No blue tap-flash / text selection / focus box on any button (Previous, Next, etc.) */
+button,
+#controls {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+button:focus,
+button:focus-visible {
+    outline: none;
+}
+button::selection,
+button *::selection {
+    background: transparent;
+}
+
+#prevBtn {
+    background: linear-gradient(180deg, #ff8a80 0%, #e53935 55%, #b71c1c 100%);
+    box-shadow: 0 4px 0 #7f0000, 0 6px 10px rgba(0,0,0,0.35);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+#prevBtn:active {
+    box-shadow: 0 2px 0 #7f0000, 0 3px 6px rgba(0,0,0,0.35);
+}
+
+#nextBtn {
+    background: linear-gradient(180deg, #a5f5b3 0%, #43a047 55%, #1b5e20 100%);
+    box-shadow: 0 4px 0 #0b3d0e, 0 6px 10px rgba(0,0,0,0.35);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+#nextBtn:active {
+    box-shadow: 0 2px 0 #0b3d0e, 0 3px 6px rgba(0,0,0,0.35);
+}
+
+/* ---------- COPY PROMPT button (sits ON pages 5-29) ----------
+   Position/size were measured from your mockup (1054 x 1492 page image) and
+   are expressed in cqw (= % of page width) so they scale with the page and
+   land in the exact same spot on every page. The page frame is 2:3 while the
+   image is 1054:1492, so top/height already include the small offset.
+   Tweak left / width / top / height below to nudge it. */
+/* Overlay that holds the button. JS sets --u (= 1% of the page width in px). */
+.btn-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    --u: 5px;
+}
+/* Page frame is now the image's own ratio (1054 x 1492), so vertical values are
+   re-measured against the image height:  top 82.31%  height 7.00%  */
+.copy-prompt-btn {
+    pointer-events: auto;
+    position: absolute;
+    left: 18.7%;
+    width: 62.6%;
+    top: 82.31%;
+    height: 7%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 calc(var(--u) * 4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--u) * 2.2);
+    overflow: hidden;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    z-index: 5;
+    color: #5b3a12;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: calc(var(--u) * 3.6);
+    font-weight: 500;
+    letter-spacing: calc(var(--u) * 0.1);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.55);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    /* transparent glass + gold rim = 3D look */
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.18) 48%, rgba(222,168,70,0.28) 100%);
+    box-shadow:
+        0 0 0 calc(var(--u) * 0.25) rgba(196,143,45,0.95),            /* gold outer rim   */
+        inset 0 0 0 calc(var(--u) * 0.55) rgba(255,243,208,0.65),     /* light inner ring */
+        inset 0 0 0 calc(var(--u) * 0.75) rgba(196,143,45,0.55),      /* thin gold line   */
+        inset 0 calc(var(--u) * 1) calc(var(--u) * 1.4) rgba(255,255,255,0.75),     /* top gloss        */
+        inset 0 calc(var(--u) * -1) calc(var(--u) * 1.4) rgba(150,95,15,0.25),      /* bottom depth     */
+        0 calc(var(--u) * 1.4) calc(var(--u) * 2.2) rgba(110,65,8,0.38),            /* drop shadow      */
+        0 calc(var(--u) * 0.5) 0 rgba(150,100,20,0.55);               /* 3D thickness     */
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.2s ease;
+}
+/* Pages 5 to 11 only: button sits slightly lower (82.31% -> 83.31%) */
+.copy-prompt-btn[data-page="5"],
+.copy-prompt-btn[data-page="6"],
+.copy-prompt-btn[data-page="7"],
+.copy-prompt-btn[data-page="8"],
+.copy-prompt-btn[data-page="9"],
+.copy-prompt-btn[data-page="10"],
+.copy-prompt-btn[data-page="11"] {
+    top: 83.31%;
+}
+/* soft light sweep across the glass */
+.copy-prompt-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(115deg, transparent, rgba(255,255,255,0.7), transparent);
+    transform: skewX(-20deg);
+    animation: cp-shine 3.2s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes cp-shine {
+    0%        { left: -60%; }
+    45%, 100% { left: 140%; }
+}
+.copy-prompt-btn:hover {
+    filter: brightness(1.06);
+}
+/* press down: the button sinks into the page */
+.copy-prompt-btn:active {
+    transform: translateY(calc(var(--u) * 0.5)) scale(0.97);
+    box-shadow:
+        0 0 0 calc(var(--u) * 0.25) rgba(196,143,45,0.95),
+        inset 0 0 0 calc(var(--u) * 0.55) rgba(255,243,208,0.55),
+        inset 0 0 0 calc(var(--u) * 0.75) rgba(196,143,45,0.55),
+        inset 0 calc(var(--u) * 0.8) calc(var(--u) * 1.6) rgba(150,95,15,0.35),
+        0 calc(var(--u) * 0.4) calc(var(--u) * 0.8) rgba(110,65,8,0.35),
+        0 0 0 rgba(150,100,20,0);
+}
+.copy-prompt-btn .cp-svg {
+    width: calc(var(--u) * 4.6);
+    height: calc(var(--u) * 4.6);
+    flex: none;
+    pointer-events: none;
+}
+.copy-prompt-btn .cp-label {
+    pointer-events: none;
+    white-space: nowrap;
+}
+/* ripple created on click (see addRipple in new.js) */
+.cp-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.7);
+    transform: scale(0);
+    animation: cp-ripple 0.5s ease-out forwards;
+    pointer-events: none;
+}
+@keyframes cp-ripple {
+    to { transform: scale(2.6); opacity: 0; }
+}
+
+/* ---------- "COPIED SUCCESSFULLY" alert (bottom centre) ---------- */
+#copyToast {
+    position: fixed;
+    left: 50%;
+    bottom: 115px; /* sits just above the Previous / Next bar */
+    transform: translateX(-50%) translateY(12px);
+    background: #2e7d32;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    padding: 11px 22px;
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 2000;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+#copyToast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+#copyToast.error {
+    background: #c62828;
+}
+
+/* Previous / Next are always the large size now (the Copy button is on the page) */
+#prevBtn,
+#nextBtn {
+    padding: 16px 30px;
+    font-size: 18px;
+    border-radius: 14px;
+}
+
+
+#pageNum {
+    color: #333;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+/* ---------- Fullscreen image viewer ---------- */
+#imgViewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    touch-action: none;
+}
+#imgViewer.open {
+    display: flex;
+}
+#imgViewer img {
+    max-width: 100%;
+    max-height: 100%;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    will-change: transform;
+}
+#viewerClose {
+    position: fixed;
+    top: 14px;
+    right: 16px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 20px;
+    line-height: 42px;
+    text-align: center;
+    padding: 0;
+    z-index: 1001;
+}
+#viewerPrev,
+#viewerNext {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+    padding: 0;
+    z-index: 1001;
+}
+#viewerPrev { left: 16px; }
+#viewerNext { right: 16px; }
+
+/* ===========================================================
+   Desktop / tablet only — everything below is scoped to
+   min-width: 769px so the phone UI stays exactly as-is.
+   =========================================================== */
+@media (min-width: 769px) {
+
+    #stage {
+        height: calc(100% - 100px); /* matches the slightly taller controls bar below */
+        padding: 30px 60px;
+        box-sizing: border-box;
+        /* soft radial "table" surface instead of a flat blank void */
+        background: radial-gradient(ellipse at center, rgba(0,0,0,0.07) 0%, rgba(0,0,0,0) 65%);
+    }
+
+    #zoomWrapper {
+        max-width: 1200px; /* 2-page spread (max ~1500px worth of page width) always ends up smaller than this and the viewport */
+        margin: 0 auto;
+    }
+
+    #book {
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        /* Give the flip engine the real available height so the whole spread
+           always fits on short laptop screens (no cut-off at the top/bottom). */
+        height: 100%;
+    }
+
+    #controls {
+        height: 100px;
+        gap: 8px;
+        max-width: 1200px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -4px 18px rgba(0,0,0,0.12);
+    }
+
+    .btn-row {
+        gap: 22px;
+    }
+
+    button {
+        font-size: 16px;
+        padding: 12px 26px;
+        border-radius: 12px;
+    }
+
+    #prevBtn,
+    #nextBtn {
+        padding: 18px 46px;
+        font-size: 20px;
+        border-radius: 16px;
+    }
+
+    #copyToast {
+        bottom: 125px;
+        font-size: 15px;
+    }
+
+    #pageNum {
+        font-size: 14px;
+    }
+
+    #viewerPrev,
+    #viewerNext {
+        width: 54px;
+        height: 54px;
+        font-size: 24px;
+    }
+}
+#readerStatus{font:12px system-ui;color:#614a2a} #readerStatus:empty{display:none}
+#readerStatus button{border:0;border-radius:6px;padding:4px 9px;color:#17499a;background:white}
+
+#readerStatus:not(:empty){position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:1100;max-width:95%;padding:6px 10px;background:#fffaf1;border-radius:8px;box-shadow:0 2px 8px #0002;text-align:center}
+#readerStatus button{min-height:36px;cursor:pointer}
+
+button:focus-visible{outline:3px solid #185cb3;outline-offset:2px}

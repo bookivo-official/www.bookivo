@@ -1,0 +1,16 @@
+{
+  "name": "bookivo-storefront",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node tests/pricing.test.js && node tests/library.test.cjs && node tests/payment.test.cjs",
+    "test:browser": "node tests/browser.test.cjs"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.17",
+    "playwright-core": "1.65.1"
+  }
+}
