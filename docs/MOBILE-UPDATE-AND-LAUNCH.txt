@@ -1,0 +1,19 @@
+BOOKIVO mobile update
+
+Implemented and browser tested: inline phone search; hidden phone logo/Bits chip; home cards without Add to Cart; separated footer sections; announcement groups of at most five words; stable PRIME dock; admin logout confirmation. Script downloads run concurrently in execution order. Local data no longer waits on simulated delays. Home cards render before reviews. Settings reads retry once with a six-second timeout; maintenance restrictions remain enforced by the backend.
+
+EMAIL SETUP STILL REQUIRED
+1. Supabase > Authentication > Emails > Templates. Paste docs/email-otp-template.html into BOTH Confirm signup and Magic link or OTP. Subject: Your BOOKIVO verification code. Save each template. Keep {{ .Token }} intact; do not place it inside an href.
+2. Authentication > Sign In / Providers > Email: set Email OTP length to 6. Keep email confirmation enabled. Request a fresh code after saving; older emails do not change.
+3. Guest checkout uses a separate four-digit code implemented by bookivo-store. It requires RESEND_API_KEY and BOOKIVO_FROM_EMAIL in Edge Functions > Secrets. Use a sender on a verified domain in Resend. Supabase Auth SMTP settings do not automatically provide those credentials to the Edge Function. Do not put keys in frontend files or GitHub.
+4. Verify with a new email signup, existing email login, and guest checkout. Confirm receipt, wrong-code rejection, expiry, successful verification and payment access. These real email delivery checks were not completed in this update because dashboard control was blocked.
+
+LAUNCH GATES
+- Set up guest email delivery and both Auth OTP templates; verify actual inbox delivery.
+- Finish Google OAuth configuration and test on the live HTTPS domain.
+- Configure and test DEEPSEEK_API_KEY for PRIME and support reply email delivery.
+- Cashfree integration is currently sandbox only, with a tester allowlist. Live launch needs a reviewed backend environment/endpoint switch, live merchant approval/keys, webhook verification and a real low-value payment/refund test. Replacing keys alone is insufficient.
+- Check both real ebooks in private storage, paid ownership enforcement, reader page navigation and delivery. Remove placeholder duplicate books before launch, or replace them with the planned real titles.
+- Test coupons, Bits earning/redemption, welcome card, support replies and single-device logout with real accounts.
+- Confirm final prices, legal/contact details, social links, refund process, analytics consent as applicable, backups and monitoring.
+- Run physical Android/iPhone checks and a live-network performance audit. Local browser tests do not establish real-world load time.

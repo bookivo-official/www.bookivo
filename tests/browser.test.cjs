@@ -49,6 +49,23 @@ const server=http.createServer((req,res)=>{
       return reply([]);
     });
     page.on('pageerror',e=>errors.push(e.message));
+    for (const width of [320,390,760,1440]) {
+      await page.setViewportSize({width,height:844});
+      await page.goto(origin+'/index.html');await page.locator('#home-books .book-card').first().waitFor();
+      assert.equal(await page.locator('#pageMain [data-add-book]').count(),0);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Home overflow '+width);
+      if(width<=760){
+        assert.ok(await page.locator('.header-search').isVisible());
+        assert.ok(await page.locator('.header-inner>.brand').isHidden());
+        assert.ok(await page.locator('.header-inner>.pages-chip').isHidden());
+        await page.locator('.header-search input').fill('portrait');
+        assert.ok(await page.locator('#searchPanel').isHidden());
+        assert.ok((await page.locator('[data-announcement-text]').textContent()).trim().split(/\s+/).length<=5);
+        const brand=await page.locator('.footer-grid>div').first().boundingBox();
+        const help=await page.locator('.footer-grid>div').nth(1).boundingBox();
+        assert.ok(help.y>=brand.y+brand.height,'Footer sections do not overlap');
+      }
+    }
     await page.goto(origin+'/books.html');await page.waitForFunction(()=>document.querySelector('#catalogCount')?.textContent.includes('12'));
     // PRIME stays alongside the storefront and survives full document navigation.
     const prime = page.locator('#chatModal');

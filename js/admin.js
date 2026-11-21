@@ -16,7 +16,7 @@ function locked(){delete sessionStorage.bv_admin;$('#console').hidden=$('#logout
 async function refresh(){data=await api('overview');$('#login').hidden=true;$('#console').hidden=$('#logout').hidden=$('#calcBtn').hidden=false;await render();}
 function safe(fn){return async e=>{try{notice('');await fn(e);}catch(err){notice(err.message);}};}
 $('#login').onsubmit=safe(async e=>{e.preventDefault();const f=e.target;const r=await api('login',Object.fromEntries(new FormData(f)));sessionStorage.bv_admin=r.token;f.password.value='';await refresh();});
-$('#logout').onclick=safe(async()=>{try{await api('logout');}finally{locked();}});
+$('#logout').onclick=safe(async()=>{if(!await confirmBox('<h2>Sign out of BOOKIVO admin?</h2><p>You will need your email and password to access the console again.</p>',0,'Yes, sign out'))return;try{await api('logout');}finally{locked();}});
 const options=(xs,cur)=>xs.map(([v,l])=>`<option value="${esc(v)}" ${String(cur)===String(v)?'selected':''}>${esc(l)}</option>`).join('');
 function confirmBox(html,delay=0,action='Confirm'){
  const d=$('#confirm');d.querySelector('div').innerHTML=html;const yes=$('#yes');d.showModal();

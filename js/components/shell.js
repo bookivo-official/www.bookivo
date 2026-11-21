@@ -12,7 +12,7 @@
   }
 
   function header() {
-    return `<header class="site-header" id="siteHeader"><div class="header-inner"><button class="menu-button icon-button" type="button" data-menu-open aria-label="Open more options" aria-controls="menuDrawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>${logoHTML()}<form class="header-search" data-header-search role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.2"></circle><path d="m16.2 16.2 4.3 4.3"></path></svg><input name="q" type="search" placeholder="Search recipes, cookbook, meals..." aria-label="Search books"><button type="button" data-header-search-clear aria-label="Clear search">×</button></form><button class="mobile-search icon-button" type="button" data-search-open aria-label="Search">⌕</button><a class="pages-chip" href="pages.html"><img src="images/bookivo-bits.png" alt="" width="26" height="26"><span>Bookivo Bits <b data-pages-balance>0</b></span></a><a class="header-cart" href="cart.html" aria-label="Cart, 0 items"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg><span class="cart-badge" data-cart-badge hidden>0</span></a><a class="header-account icon-button" href="account.html" aria-label="My account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg></a></div></header>`;
+    return `<header class="site-header" id="siteHeader"><div class="header-inner"><button class="menu-button icon-button" type="button" data-menu-open aria-label="Open more options" aria-controls="menuDrawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>${logoHTML()}<form class="header-search" data-header-search role="search"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.2"></circle><path d="m16.2 16.2 4.3 4.3"></path></svg><input name="q" type="search" placeholder="Search books..." aria-label="Search books"><button type="button" data-header-search-clear aria-label="Clear search">×</button></form><button class="mobile-search icon-button" type="button" data-search-open aria-label="Search">⌕</button><a class="pages-chip" href="pages.html"><img src="images/bookivo-bits.png" alt="" width="26" height="26"><span>Bookivo Bits <b data-pages-balance>0</b></span></a><a class="header-cart" href="cart.html" aria-label="Cart, 0 items"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg><span class="cart-badge" data-cart-badge hidden>0</span></a><a class="header-account icon-button" href="account.html" aria-label="My account"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path></svg></a></div></header>`;
   }
 
   document.addEventListener('click', event => {
@@ -69,6 +69,18 @@
     const landing = document.body.dataset.page === 'lp';
     const [content, categories] = await Promise.all([w.Bookivo.Api.config.getContent(), w.Bookivo.Api.books.categories()]);
     if (D.$('#shell-announcement')) D.$('#shell-announcement').innerHTML = announcement();
+    const banner = D.$('[data-announcement-text]');
+    if (banner) {
+      const full = banner.textContent, words = full.trim().split(/\s+/);
+      let group = 0;
+      const phone = window.matchMedia('(max-width:760px)');
+      function updateBanner(){
+        banner.textContent = phone.matches ? words.slice(group*5,group*5+5).join(' ') : full;
+        group=(group+1)%Math.ceil(words.length/5);
+      }
+      updateBanner();phone.addEventListener('change',()=>{group=0;updateBanner();});
+      setInterval(()=>{if(!document.hidden && phone.matches)updateBanner();},5000);
+    }
     if (D.$('#shell-header')) D.$('#shell-header').innerHTML = header();
     if (D.$('#shell-nav')) D.$('#shell-nav').innerHTML = nav();
     if (D.$('#shell-footer')) D.$('#shell-footer').innerHTML = footer(content);

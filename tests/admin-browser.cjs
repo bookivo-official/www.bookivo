@@ -31,6 +31,8 @@ const {chromium}=require('playwright-core');
  assert.equal(await page.locator('#yes').isDisabled(),true);await page.clock.fastForward(31000);await page.locator('#yes').click();await page.getByRole('button',{name:'Restore BOOKIVO'}).waitFor();
  await page.locator('#calcBtn').click();for(const key of ['2','+','3','='])await page.locator('#calc').getByRole('button',{name:key,exact:true}).click();
  assert.equal(await page.locator('output').textContent(),'5');assert.deepEqual(errors,[]);
+ await page.locator('#logout').click();await page.locator('dialog[open]').waitFor();await page.locator('#cancel').click();assert.ok(await page.locator('#console').isVisible());
+ await page.locator('#logout').click();await page.locator('#yes').click();assert.ok(await page.locator('#login').isVisible());
  console.log('PASS admin login, seven sections, code generation, maintenance timers and calculator.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
