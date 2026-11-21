@@ -109,6 +109,9 @@ window.startBookivoReader = function (reader) {
         const img = document.createElement('img');
         img.dataset.page = String(idx+1);
         img.alt = 'Page '+(idx+1);
+        img.tabIndex = 0;
+        img.setAttribute('role','button');
+        img.setAttribute('aria-label','Enlarge page '+(idx+1));
         img.decoding='async';
         img.draggable = false;
         pageDiv.appendChild(img);
@@ -134,6 +137,7 @@ window.startBookivoReader = function (reader) {
     });
 
     // ---------- 2. INIT PAGEFLIP (responsive / mobile friendly) ----------
+    let viewerOpen = false;
     const pageFlip = new St.PageFlip(bookEl, {
         width: 1054,
         height: 1492,  // = real page image size (1054 x 1492) so the page has NO bars/borders
@@ -166,7 +170,7 @@ window.startBookivoReader = function (reader) {
         });
     };
     reader.visit(reader.start);
-    pageFlip.on('flip',e=>reader.visit(e.data+1));
+    pageFlip.on('flip',e=>{ if (!viewerOpen) reader.visit(e.data+1); });
     // ---------- 2b. KEEP COPY BUTTONS SIZED CORRECTLY ----------
     // Each page's button layer gets --u = 1% of that page's width in px.
     // (Replaces the old cqw units, which could fail to re-calculate after a
@@ -193,6 +197,10 @@ window.startBookivoReader = function (reader) {
     // ---------- 3. PAGE COUNTER ----------
     const pageNumEl = document.getElementById('pageNum');
     function updatePageNum() {
+        const spreads = pageFlip.getPageCollection();
+        const current = spreads.getCurrentSpreadIndex();
+        document.getElementById('prevBtn').disabled = current === 0;
+        document.getElementById('nextBtn').disabled = current >= spreads.getSpread().length - 1;
         pageNumEl.textContent = `${pageFlip.getCurrentPageIndex() + 1} of ${pageFlip.getPageCount()}`;
     }
     updatePageNum();
@@ -224,12 +232,23 @@ window.startBookivoReader = function (reader) {
     }
 
     // ---------- 5. BUTTON CONTROLS ----------
-    document.getElementById('prevBtn').addEventListener('click', () => {
-        pageFlip.flipPrev();
-    });
-    document.getElementById('nextBtn').addEventListener('click', () => {
-        pageFlip.flipNext();
-    });
+    // Animate from the printed page's corner. The outer stage includes margins on wide screens.
+    function turnSpread(direction) {
+        pageFlip.getRender().finishAnimation();
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            const bounds = pageFlip.getBoundsRect();
+            const inset = 2;
+            pageFlip.getFlipController().flip({
+                x: bounds.left + (direction < 0 ? inset : bounds.width - inset),
+                y: bounds.top + inset
+            });
+            if (pageFlip.getState() === 'flipping') return;
+        }
+        if (direction < 0) pageFlip.turnToPrevPage();
+        else pageFlip.turnToNextPage();
+    }
+    document.getElementById('prevBtn').onclick = () => turnSpread(-1);
+    document.getElementById('nextBtn').onclick = () => turnSpread(1);
 
     // ---------- 5b. COPY PROMPT BUTTONS (one on each page 5-29) ----------
     const copyToast = document.getElementById('copyToast');
@@ -328,25 +347,38 @@ window.startBookivoReader = function (reader) {
     }
 
     function openViewer(index) {
-        viewerIndex = index;
-        viewerImg.dataset.page=String(viewerIndex+1);
-        viewerImg.removeAttribute('src');
-        reader.visit(viewerIndex+1);
-        resetViewerZoom();
+        if (viewerOpen) return;
+        viewerOpen = true;
+        pageFlip.getRender().finishAnimation();
+        reader.setExpanded(true);
+        document.getElementById('stage').inert = true;
+        controlsEl.inert = true;
         viewer.classList.add('open');
+        showViewerIndex(index);
+        viewerClose.focus({preventScroll:true});
     }
 
     function closeViewer() {
-        pageFlip.getRender().finishAnimation();
+        reader.setExpanded(false);
         viewer.classList.remove('open');
+        document.getElementById('stage').inert = false;
+        controlsEl.inert = false;
         delete viewerImg.dataset.page;
+        viewerImg.removeAttribute('src');
+        pageFlip.update();
         pageFlip.turnToPage(viewerIndex);
-        reader.visit(viewerIndex+1);
+        viewerOpen = false;
+        updatePageNum();
+        reader.visit(viewerIndex + 1);
+        (document.querySelector('#controls button:not(:disabled)') || controlsEl).focus({preventScroll:true});
     }
 
     function showViewerIndex(newIndex) {
         if (newIndex < 0 || newIndex >= pages.length) return;
         viewerIndex = newIndex;
+        viewerPrev.disabled = newIndex === 0;
+        viewerNext.disabled = newIndex === pages.length - 1;
+        viewerImg.alt = 'Page ' + (newIndex + 1) + ' of ' + pages.length;
         viewerImg.dataset.page=String(viewerIndex+1);
         viewerImg.removeAttribute('src');
         reader.visit(viewerIndex+1);
@@ -398,6 +430,13 @@ window.startBookivoReader = function (reader) {
         if (img) openViewerForImg(img);
     });
 
+    bookEl.addEventListener('keydown', event => {
+        const img = findPageImg(event.target);
+        if (img && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            openViewerForImg(img);
+        }
+    });
     viewerClose.addEventListener('click', closeViewer);
     document.addEventListener('keydown', event => {
         if (event.altKey || event.ctrlKey || event.metaKey) return;

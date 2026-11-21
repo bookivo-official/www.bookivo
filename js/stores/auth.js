@@ -27,6 +27,19 @@
     store.set(null);
     resolveReady();
   }
+  let checking=false;
+  async function checkDevice(){
+    if(checking || !client || !store.get())return;
+    checking=true;
+    try{
+      const {data,error}=await client.rpc('bv_session_current');
+      if(!error && data===false){
+        await client.auth.signOut({scope:'local'});
+        location.replace(new URL('session-ended.html',document.baseURI));
+      }
+    }finally{checking=false;}
+  }
+  ready.then(checkDevice);window.addEventListener('focus',checkDevice);setInterval(checkDevice,15000);
   const AuthStore = {
     get:store.get,
     set:store.set,

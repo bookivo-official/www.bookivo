@@ -1,5 +1,6 @@
 'use strict';
 (function (w) {
+  w.Bookivo = w.Bookivo || {};
   const prefix = 'bookivo_';
   function read(key, fallback) {
     try { const raw = w.localStorage.getItem(prefix + key); return raw === null ? fallback : JSON.parse(raw); }

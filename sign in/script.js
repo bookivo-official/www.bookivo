@@ -14,6 +14,8 @@ const supabaseClient = configured ? window.supabase.createClient(SUPABASE_URL, S
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 }) : null;
 
+window.Bookivo.Chat.init(supabaseClient?.auth);
+
 /* ============ 2. UI: slide login panel up / down ============ */
 const card = document.getElementById("card");
 const loginForm = document.getElementById("loginForm");
@@ -46,7 +48,7 @@ function toast(text, type, ms) {
   toastEl.className = "toast " + (type || "ok");
   void toastEl.offsetWidth;                       // restart the transition
   toastEl.classList.add("show");
-  toastTimer = setTimeout(() => toastEl.classList.remove("show"), ms || 1500);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3000);
 }
 function ensureConfigured() {
   if (configured) return true;
@@ -58,6 +60,7 @@ const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 /* ============ 4. EMAIL + OTP (Supabase) ============ */
 /* mode "signup": creates the user if new.  mode "login": only existing users. */
 function setupOtp(form, mode, msgEl) {
+  const signupAttempt = crypto.randomUUID();
   const email = form.email, otp = form.otp, vbtn = form.querySelector(".verify");
   let sentTo = null, verifiedEmail = null, timer = null;
 
@@ -84,8 +87,7 @@ function setupOtp(form, mode, msgEl) {
 
     vbtn.disabled = true; vbtn.textContent = "…";
     const options = { shouldCreateUser: mode === "signup" };
-    if (mode === "signup" && form.username && form.username.value.trim())
-      options.data = { username: form.username.value.trim() };
+    if (mode === "signup") options.data = { username: form.username.value.trim(), signup_attempt: signupAttempt };
     let result;
     try {
       result = await supabaseClient.auth.signInWithOtp({ email: e, options });
@@ -97,7 +99,7 @@ function setupOtp(form, mode, msgEl) {
     if (error) { resetVerifyBtn(); return toast(error.message, "err", 3000); }
 
     sentTo = e;
-    setMsg(msgEl, "OTP sent to " + e);
+    toast("OTP sent successfully", "ok");
     startCooldown(30);
     otp.value = ""; otp.focus();
   });
@@ -128,6 +130,11 @@ function setupOtp(form, mode, msgEl) {
     if (error) {
       otp.value = ""; otp.focus();
       return toast("YOU ENTERED WRONG OTP.. TRY AGAIN", "err");
+    }
+    if (mode === 'signup' && result.data.user.user_metadata?.signup_attempt !== signupAttempt) {
+      await supabaseClient.auth.signOut({scope:'local'});
+      resetVerifyBtn(); otp.value = ''; sentTo = null;
+      return toast('You already have an account. Please log in.', 'err');
     }
     verifiedEmail = sentTo;
     clearInterval(timer);
@@ -172,7 +179,7 @@ signupForm.addEventListener("submit", async (e) => {
     return toast(error.message || "Could not save your profile. Please try again.", "err", 3000);
   }
   toast("Account created!", "ok", 1500);
-  setTimeout(() => (window.location.href = REDIRECT_AFTER_LOGIN), 1200);
+  setTimeout(() => (window.location.href = REDIRECT_AFTER_LOGIN), 3000);
 });
 
 loginForm.addEventListener("submit", (e) => {
@@ -182,7 +189,7 @@ loginForm.addEventListener("submit", (e) => {
   const submit = loginForm.querySelector('[type="submit"]');
   submit.disabled = true;
   toast("Logged in!", "ok", 1500);
-  setTimeout(() => (window.location.href = REDIRECT_AFTER_LOGIN), 1200);
+  setTimeout(() => (window.location.href = REDIRECT_AFTER_LOGIN), 3000);
 });
 
 document.querySelectorAll("[data-google]").forEach((btn) => {

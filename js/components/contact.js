@@ -20,7 +20,7 @@
           name: form.elements.name.value.trim(),
           email: form.elements.email.value.trim(),
           subject: 'Contact Us message',
-          topic: 'Others',
+          topic: form.elements.topic.value,
           message
         });
         form.reset();

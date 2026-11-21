@@ -326,6 +326,9 @@ button *::selection {
     display: flex;
 }
 #imgViewer img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
     max-width: 100%;
     max-height: 100%;
     touch-action: none;
@@ -373,14 +376,14 @@ button *::selection {
 
     #stage {
         height: calc(100% - 100px); /* matches the slightly taller controls bar below */
-        padding: 30px 60px;
+        padding: 8px clamp(6px, 1vw, 18px);
         box-sizing: border-box;
         /* soft radial "table" surface instead of a flat blank void */
         background: radial-gradient(ellipse at center, rgba(0,0,0,0.07) 0%, rgba(0,0,0,0) 65%);
     }
 
     #zoomWrapper {
-        max-width: 1200px; /* 2-page spread (max ~1500px worth of page width) always ends up smaller than this and the viewport */
+        max-width: 1600px;
         margin: 0 auto;
     }
 
@@ -441,3 +444,5 @@ button *::selection {
 #readerStatus button{min-height:36px;cursor:pointer}
 
 button:focus-visible{outline:3px solid #185cb3;outline-offset:2px}
+
+#controls button:disabled, #imgViewer button:disabled { opacity: .45; cursor: default; }
