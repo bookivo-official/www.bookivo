@@ -39,6 +39,10 @@
     }
     let last=entry.last_page, prompts;
     window.BookivoReader={start:last,total:book.pages,bookId:book.id,
+      setExpanded(expanded){
+        root.querySelector('[data-stage]').classList.toggle('page-expanded',expanded);
+        root.querySelector('header').inert=expanded;
+      },
       async image(page){
         if(!Number.isInteger(page)||page<1||page>book.pages)throw Error('Invalid page');
         return B.Api.orders.result(bucket.download(book.storage_prefix+'/images/page'+page+'.png'));

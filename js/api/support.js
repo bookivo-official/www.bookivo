@@ -3,7 +3,7 @@
   B.Api.support={
     async createTicket(data){
       const user=B.AuthStore.get();
-      if(!user)throw Error('Sign in to send a support ticket or contact BOOKIVO using the Instagram link in the footer.');
+      if(!user)return B.Api.orders.action('contact',data);
       if(data.email.trim().toLowerCase()!==user.email.toLowerCase())throw Error('Enter the email address for your signed-in account.');
       return B.Api.orders.action('ticket',data);
     },

@@ -1,5 +1,20 @@
 # BOOKIVO library and sandbox launch guide
 
+## Store service configuration
+
+In Supabase Edge Function secrets set DEEPSEEK_API_KEY to your funded DeepSeek API key, RESEND_API_KEY to your private transactional mail key, and BOOKIVO_FROM_EMAIL to a sender on your verified Resend domain. The guest purchase code expires in ten minutes. Account email continues to use your Supabase SMTP configuration. Use the same verified checkout email to sign in later and read the purchase. The sandbox buyer allowlist still applies.
+
+PRIME uses deepseek-flash. The complete instructions are in PRIME-system-prompt.txt. Visitor messages are stored in bv_contact_inbox. Signed-in support conversations are in bv_tickets and bv_ticket_messages. Both are available for the future protected admin inbox.
+
+## Before opening BOOKIVO to customers
+
+- Publish the storefront ZIP on the final HTTPS address. Set that exact address in Supabase Auth URL Configuration and in the server's BOOKIVO_SITE_URL, including the project path if you host in a subfolder.
+- Cashfree checkout is currently sandbox-only in both the browser and the Edge Function. A production release needs the live Orders API, production checkout mode, and customer access in place of the sandbox tester list. Keep the merchant secret in Supabase Edge Function secrets. Keep test orders and library access separate from real customer data.
+- Approve the store domain in Cashfree, register the signed webhook in the corresponding merchant environment, then complete a hosted sandbox purchase with a test account. Confirm that the order unlocks exactly one book, failure or cancellation leaves it locked, and re-delivery of the notification cannot award it twice. Decide who handles refunds and how refunded orders affect library access and Bits. The current webhook processes payment events only.
+- The project reports email sign-in enabled and Google sign-in disabled. Test delivery and sign-in from a fresh inbox on the hosted site. Enable Google if you keep the Google button.
+- The database lists two purchasable ebooks. Replace or hide the ten duplicate catalogue entries before public sales. Publish the grievance contact information, confirm the support channel is monitored, and check that delivery and refund wording matches the experience customers receive.
+
+
 ## What changed
 
 The starting site was a static HTML/CSS/JavaScript storefront. Its cart, product folders, original marketing images, account menu and email-code sign-in already existed. Ownership, reader access, reviews and order outcomes previously depended on browser data. No store tables, private book bucket or store Edge Function existed in the connected project when inspected.

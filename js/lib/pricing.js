@@ -4,7 +4,7 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) { root.Bookivo = root.Bookivo || {}; root.Bookivo.Pricing = api; }
 })(typeof window !== 'undefined' ? window : null, function () {
-  const COUPONS = Object.freeze({ WELCOME10: 10, NEWYEAR15: 15, FESTIVE20: 20 });
+  const COUPONS = Object.freeze({ BOOKIVO: 2, WELCOME10: 10, NEWYEAR15: 15, FESTIVE20: 20 });
   const SCRATCH_ODDS = Object.freeze([{ pages: 8, weight: 10 }, { pages: 10, weight: 50 }, { pages: 12, weight: 25 }, { pages: 16, weight: 15 }]);
   function clampPercent(value) { return Math.max(0, Math.min(20, Number(value) || 0)); }
   function getISTDate(date) {
@@ -29,6 +29,7 @@
         if (is19thIST(now)) { couponRate = 19; label = '19th-day code, 19%'; }
         else warnings.push('This code works only on the 19th of every month');
       } else if (Object.prototype.hasOwnProperty.call(COUPONS, code)) {
+        if(code==='BOOKIVO' && !items.some(book=>book.price>100)) warnings.push('BOOKIVO applies to ebooks priced above ₹100.');
         couponRate = clampPercent(COUPONS[code]); label = `Coupon ${code}, ${couponRate}%`;
       } else if (/^BOOKIVO\d{3,}$/.test(code)) {
         couponRate = 5; label = 'Partner code, 5%';
@@ -48,7 +49,8 @@
     const lines = items.map(item => {
       const price = Math.max(0, Math.floor(Number(item.price) || 0));
       let discount = 0;
-      if (mode === 'coupon' && couponRate) discount = Math.floor(price * clampPercent(couponRate) / 100);
+      if (couponRate && String(input.couponCode).trim().toUpperCase()==='BOOKIVO') discount = price > 100 ? Math.round(price * 2) / 100 : 0;
+      else if (mode === 'coupon' && couponRate) discount = Math.floor(price * clampPercent(couponRate) / 100);
       if (mode === 'pages' && price > 99) {
         discount = Math.min(pagesLeft, Math.floor(price * 0.19));
         pagesLeft -= discount; pagesUsed += discount;

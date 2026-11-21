@@ -36,18 +36,59 @@ const server=http.createServer((req,res)=>{
           return reply(data);
         }
         if(missing)return reply({message:'Missing'},404);
-        const image=process.env.BOOKIVO_TEST_IMAGES?path.join(process.env.BOOKIVO_TEST_IMAGES,endpoint):path.join(root,book.cover);
+        const folder = url.pathname.includes('/bachelor-cookbook/') ? process.env.BOOKIVO_TEST_COOKBOOK_IMAGES : process.env.BOOKIVO_TEST_IMAGES;
+        const image = folder ? path.join(folder,endpoint) : path.join(root,book.cover);
         return route.fulfill({path:image,contentType:'image/png',headers:{'access-control-allow-origin':'*'}});
       }
       if(endpoint==='bv_books')return reply([{id:'book-2'}]);
       if(endpoint==='user')return reply(user);
       if(endpoint==='bv_profiles')return reply({bits:0,welcome_state:'dismissed'});
       if(endpoint==='bv_library')return libraryError?reply({message:'Offline'},503):reply(entries);
-      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);return body.action==='checkout'?reply({id:body.id,session:'offline-session'}):reply({revision:body.revision+1});}
+      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);if(body.action==='prime')return reply({reply:'Once payment is confirmed, open My Shelf.'});return body.action==='checkout'?reply({id:body.id,session:'offline-session'}):reply({revision:body.revision+1});}
       return reply([]);
     });
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(origin+'/books.html');await page.waitForFunction(()=>document.querySelector('#catalogCount')?.textContent.includes('12'));
+    // PRIME stays alongside the storefront and survives full document navigation.
+    const prime = page.locator('#chatModal');
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({width,height:844});
+      await page.goto(origin+'/cart.html');
+      const empty = page.locator('#cartEmpty');
+      await empty.waitFor();
+      const card = await empty.boundingBox(), main = await page.locator('#pageMain').boundingBox();
+      assert.ok(Math.abs(card.width-main.width)<2 && Math.abs(card.x-main.x)<2,'Empty cart fills the centred content area');
+      for (const cls of ['.chat-fab','.contact-fab']) {
+        assert.equal(await page.locator(cls).evaluate(el=>getComputedStyle(el).borderTopWidth),'3px');
+      }
+      await page.getByRole('button',{name:'Chat PRIME',exact:true}).click();
+      await prime.waitFor();
+      const dock = await page.locator('.chat-fab').boundingBox(), panel = await prime.boundingBox();
+      assert.ok(panel.y>=0 && panel.y+panel.height<=dock.y+1 && Math.abs(panel.x+panel.width-dock.x-dock.width)<3);
+      assert.equal(await page.locator('body.modal-open,.modal-backdrop.is-open').count(),0);
+      await page.evaluate(()=>window.scrollTo(0,500));
+      assert.ok(await page.evaluate(()=>scrollY>0),'Store scrolls under open chat');
+      await prime.getByRole('textbox').fill('How do I get my ebook?');
+      await prime.getByRole('button',{name:'Send message'}).click();
+      await prime.getByText(/Once payment is confirmed/).first().waitFor();
+      await prime.getByRole('textbox').fill('Unsent question');
+      await page.getByRole('link',{name:'Browse ebooks',exact:true}).click();
+      await page.waitForURL('**/books.html');
+      await prime.waitFor();
+      assert.equal(await prime.getByRole('textbox').inputValue(),'Unsent question');
+      await prime.getByText(/Once payment is confirmed/).first().waitFor();
+      await page.goto(origin+'/BOOK-2/index.html');
+      await prime.waitFor();
+      await page.keyboard.press('Escape');
+      assert.ok(await prime.isVisible());
+      await page.goto(origin+'/Free%20calculater/index.html');
+      await prime.waitFor();
+      await prime.getByText(/Once payment is confirmed/).first().waitFor();
+      await prime.getByRole('button',{name:'Close Chat PRIME'}).click();
+      await page.goto(origin+'/cart.html');
+      await page.locator('#cartEmpty').waitFor();
+      assert.ok(await prime.isHidden());
+    }
     await page.goto(origin+'/BOOK-2/index.html');await page.waitForFunction(()=>window.BookivoBookCanReview===false && document.scripts.length>20);
     await page.waitForFunction(()=>Array.from(document.scripts).some(s=>s.src.endsWith('/BOOK-2/book.js')));
     await page.locator('#addToCartBtn').click();await page.waitForFunction(()=>window.Bookivo.CartStore.count()===1);
@@ -94,14 +135,54 @@ const server=http.createServer((req,res)=>{
     await frame.locator('#imgViewer.open').waitFor();await frame.locator('#viewerClose').click();
     await frame.locator('#nextBtn').click();await page.waitForFunction(()=>document.querySelector('iframe').contentDocument.querySelector('#pageNum').textContent.includes('18 of 30'),null,{timeout:6000}).catch(async e=>{console.error('After next:',await frame.locator('#pageNum').innerText(),errors);throw e;});
     await page.waitForTimeout(800);assert.ok(writes.some(w=>w.page===18));
+    for (const width of [390,1440]) {
+      await page.setViewportSize({width,height:844});
+      await page.reload();
+      await frame.locator('.my-page img[src^="blob:"]').first().waitFor({state:'attached'});
+      await page.waitForFunction(()=>/of 30/.test(document.querySelector('iframe')?.contentDocument?.querySelector('#pageNum')?.textContent));
+      assert.equal(await page.locator('.site-header,.secondary-nav,.announcement,.floating-actions,#chatModal').count(),0);
+      const initial = await frame.locator('#pageNum').innerText();
+      await frame.locator('#prevBtn').click();
+      await page.waitForFunction(value=>document.querySelector('iframe').contentDocument.querySelector('#pageNum').textContent!==value,initial);
+      const previous = await frame.locator('#pageNum').innerText();
+      assert.ok(parseInt(previous)<parseInt(initial),'Previous moves backward at '+width);
+      await frame.locator('#nextBtn').click();
+      await page.waitForFunction(value=>document.querySelector('iframe').contentDocument.querySelector('#pageNum').textContent===value,initial);
+      await frame.locator('.my-page img[src^="blob:"]:visible').first().click({position:{x:40,y:80}});
+      await frame.locator('#imgViewer.open').waitFor();
+      const expanded = await page.locator('iframe').boundingBox();
+      assert.deepEqual(expanded,{x:0,y:0,width,height:844});
+      const enlargedPage = await frame.locator('#viewerImg').getAttribute('data-page');
+      await frame.locator('#viewerPrev').click();
+      assert.equal(Number(await frame.locator('#viewerImg').getAttribute('data-page')),Number(enlargedPage)-1);
+      await frame.locator('#viewerNext').click();
+      assert.equal(await frame.locator('#viewerImg').getAttribute('data-page'),enlargedPage);
+      await page.keyboard.press('Escape');
+      await frame.locator('#imgViewer.open').waitFor({state:'hidden'});
+      assert.ok((await page.locator('iframe').boundingBox()).y>0);
+    }
     await page.getByText('Mark unread',{exact:true}).click();await page.waitForURL('**/my-books.html');assert.ok(writes.some(w=>w.state==='next_up'));
     missing=true;await page.goto(origin+'/read.html?book=book-2');await frame.getByRole('button',{name:'Retry'}).waitFor();
     missing=false;await frame.getByRole('button',{name:'Retry'}).click({timeout:4000}).catch(async e=>{console.error('Retry layout:',await frame.locator('#readerStatus').evaluate(el=>[innerWidth,innerHeight,el.getBoundingClientRect().toJSON(),el.querySelector('button')?.getBoundingClientRect().toJSON()]),await page.locator('iframe').boundingBox());throw e;});await frame.locator('.my-page img[src^="blob:"]').first().waitFor({state:'attached'});
+    const cookbook = {id:'cookbook',title:'Bachelor 99 Survival Cookbook',pages:114,storage_prefix:'bachelor-cookbook'};
+    entries = [{...row,book_id:cookbook.id,book:cookbook,last_page:34}];
+    await page.goto(origin+'/read.html?book=cookbook');
+    await page.waitForFunction(()=>document.querySelector('iframe')?.contentDocument?.querySelector('#pageNum')?.textContent==='34 of 114');
+    await frame.locator('#prevBtn').click();
+    await page.waitForFunction(()=>document.querySelector('iframe').contentDocument.querySelector('#pageNum').textContent==='32 of 114');
+    await frame.locator('#nextBtn').click();
+    await page.waitForFunction(()=>document.querySelector('iframe').contentDocument.querySelector('#pageNum').textContent==='34 of 114');
     entries=[];await page.reload();await page.getByText('This book is not on your shelf').waitFor();assert.equal(await page.locator('iframe').count(),0);
     const guest=await browser.newContext();
     await guest.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());
-    const gp=await guest.newPage();await gp.goto(origin+'/read.html?book=book-2');await gp.waitForURL('**/sign%20in/index.html');await guest.close();
-    assert.deepEqual(errors,[]);console.log('PASS: catalogue boot; five responsive widths; empty, full, search, retry and discovery shelves; owner and non-owner reader; resume, page turn, progress, reset and missing-image retry');
+    const gp=await guest.newPage();await gp.goto(origin+'/read.html?book=book-2');await gp.waitForURL('**/sign%20in/index.html');
+    await gp.getByRole('button',{name:'Chat PRIME',exact:true}).click();
+    await gp.locator('#chatModal').waitFor();
+    await gp.goto(origin+'/books.html');
+    await gp.locator('#chatModal').waitFor();
+    await gp.getByRole('button',{name:'Close Chat PRIME'}).click();
+    await guest.close();
+    assert.deepEqual(errors,[]);console.log('PASS: desktop and mobile spread navigation, viewport zoom, centred cart and persistent nonmodal chat; catalogue boot; five responsive widths; empty, full, search, retry and discovery shelves; owner and non-owner reader; resume, page turn, progress, reset and missing-image retry');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>server.close());
 

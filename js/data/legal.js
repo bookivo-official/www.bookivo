@@ -11,7 +11,7 @@
       terms: [
         {
           heading: '1. Personal-Use Licence',
-          body: 'Every ebook purchased from BOOKIVO is licensed exclusively for the personal use of the purchasing customer. Customers may read, download and access their purchased ebooks for their own educational and informational purposes. Sharing, reselling, redistributing, uploading or providing copies of purchased ebooks to other individuals or platforms is strictly prohibited. Purchasing an ebook does not transfer its copyright or ownership rights to the buyer.'
+          body: 'Each account supports one active device. Signing in on another device ends the previous session. Every ebook purchased from BOOKIVO is licensed exclusively for the personal use of the purchasing customer. Customers may read, download and access their purchased ebooks for their own educational and informational purposes. Sharing, reselling, redistributing, uploading or providing copies of purchased ebooks to other individuals or platforms is strictly prohibited. Purchasing an ebook does not transfer its copyright or ownership rights to the buyer.'
         },
         {
           heading: '2. Watermarking & Content Protection',

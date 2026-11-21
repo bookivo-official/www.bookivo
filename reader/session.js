@@ -5,7 +5,7 @@
   if(!context){status.textContent='Open this reader from My Shelf.';return;}
   const cache=new Map(),pending=new Set(),failed=new Set();
   let center=context.start,closed=false;
-  const reader={start:center,total:context.total,promptsEnabled:context.bookId==='book-2',prompt:context.prompt,visit};
+  const reader={start:center,total:context.total,promptsEnabled:context.bookId==='book-2',prompt:context.prompt,setExpanded:context.setExpanded,visit};
   const wanted=()=>[center,center+1,center-1,center+2,center-2].filter(p=>p>0&&p<=reader.total);
   function notice(){
     const missing=wanted().filter(p=>failed.has(p) && (p===center || p===center+1));
@@ -45,7 +45,7 @@
     if(cache.has(page))context.progress(page);
     pump();
   }
-  window.addEventListener('pagehide',()=>{closed=true;for(const url of cache.values())URL.revokeObjectURL(url);},{once:true});
+  window.addEventListener('pagehide',event=>{if(!event.persisted){closed=true;for(const url of cache.values())URL.revokeObjectURL(url);}});
   window.startBookivoReader(reader);
 })();
 

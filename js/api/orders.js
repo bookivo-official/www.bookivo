@@ -33,15 +33,20 @@
     async ownedBooks(){return (await library()).map(row=>row.book);},
     async list(){return (await result(B.supabase.from('bv_orders').select(selection).order('created_at',{ascending:false}))).map(present);},
     async createOrder(details){
-      const fingerprint=JSON.stringify([B.AuthStore.get().id,details]);
+      const fingerprint=JSON.stringify([B.AuthStore.get()?.id || details.email,details]);
       const saved=JSON.parse(sessionStorage.getItem('bv_checkout')||'null');
       const id=saved?.fingerprint===fingerprint ? saved.id : crypto.randomUUID();
       sessionStorage.setItem('bv_checkout',JSON.stringify({id,fingerprint}));
-      try { return await action('checkout',{...details,id}); }
+      try { return await action('checkout',{...details,id,guestToken:B.AuthStore.get()?undefined:sessionStorage.getItem('bv_guest_token')}); }
       catch(error){if(error.message==='This payment session has ended.')sessionStorage.removeItem('bv_checkout');throw error;}
     },
     async getStatus(id){
-      if(!B.AuthStore.get()){signIn();return null;}
+      if(!B.AuthStore.get()){
+        const guestToken=sessionStorage.getItem('bv_guest_token');
+        if(!guestToken){signIn();return null;}
+        const order=await action('status',{id,guestToken});
+        return {orderId:id,status:order.status,guest:true};
+      }
       let row=await result(B.supabase.from('bv_orders').select(selection).eq('id',id).maybeSingle());
       if(!row)return null;
       if(['pending','failed'].includes(row.status)) row.status=(await action('status',{id})).status;

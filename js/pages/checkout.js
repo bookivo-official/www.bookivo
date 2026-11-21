@@ -32,9 +32,36 @@
     B._lastPricing=result;return result;
   }
   function updateButton(){const name=form.elements.name.value.trim(),email=form.elements.email.value.trim(),phone=form.elements.phone.value.replace(/\D/g,'');$('.checkout-submit').disabled=!(name&&verified&&email.toLowerCase()===verifiedEmail.toLowerCase()&&/^[6-9]\d{9}$/.test(phone));}
+  let challenge=null;
+  async function guestCode(check){
+    const email=form.elements.email.value.trim().toLowerCase();
+    if(!form.elements.email.reportValidity()||!email)return;
+    const code=form.elements.guestCode.value;
+    if(check && (!challenge || challenge.email!==email || !/^\d{4}$/.test(code)))return;
+    const button=check?$('#guestConfirm'):$('#guestVerify');
+    if(button.disabled)return;
+    button.disabled=true;
+    try{
+      const result=await B.Api.orders.action(check?'guest-verify':'guest-otp',check?{id:challenge.id,code}:{email});
+      if(form.elements.email.value.trim().toLowerCase()!==email)return;
+      if(check){
+        verified=true;verifiedEmail=email;sessionStorage.setItem('bv_guest_token',result.token);
+        $('#guestCodeRow').hidden=true;form.elements.email.readOnly=true;$('#guestVerify').hidden=true;updateButton();
+        B.Toast.show('EMAIL VERIFIED SUCCESSFULLY','success');
+      }else{
+        challenge={id:result.id,email};$('#guestCodeRow').hidden=false;form.elements.guestCode.value='';form.elements.guestCode.focus();
+        B.Toast.show('OTP SENT SUCCESSFULLY','success');
+      }
+    }catch(e){B.Toast.show(e.message,'error');}
+    finally{button.disabled=false;}
+  }
   function bind(){
     modal=document.getElementById('checkoutModal');if(!modal)return;form=modal.querySelector('[data-checkout-form]');
     form.addEventListener('input',event=>{if(event.target.name==='coupon'&&form.elements.coupon.value!=='TODAY_IS_19'){auto19=false;modal.querySelector('[data-remove-auto]').hidden=true;}updateButton();updatePricing();saveDraft();});
+    $('#guestVerify').onclick=()=>guestCode(false);
+    $('#guestConfirm').onclick=()=>guestCode(true);
+    form.elements.guestCode.oninput=()=>{if(/^\d{4}$/.test(form.elements.guestCode.value))guestCode(true);};
+    form.elements.email.oninput=()=>{challenge=null;verified=false;$('#guestCodeRow').hidden=true;updateButton();};
     form.addEventListener('submit',submit);
     modal.querySelector('[data-apply-coupon]').addEventListener('click',applyCoupon);
     modal.querySelector('[data-remove-auto]').addEventListener('click',()=>{auto19=false;form.elements.coupon.value='';modal.querySelector('[data-remove-auto]').hidden=true;$('.discount-message').textContent='';setMode('coupon');});
@@ -44,21 +71,22 @@
   async function applyCoupon(){const code=form.elements.coupon.value.trim().toUpperCase();form.elements.coupon.value=code;auto19=code==='TODAY_IS_19'&&B.Pricing.is19thIST(nowIST());const result=await B.Api.coupons.validate(code,currentItems,nowIST());$('.discount-message').textContent=auto19?'Auto-applied today · 19% off':result.message;$('.discount-message').classList.toggle('is-success',result.valid);modal.querySelector('[data-remove-auto]').hidden=!auto19;updatePricing();saveDraft();}
   async function open(items,options){
     const user=B.AuthStore.get();
-    if (!user) { B.Api.orders.signIn(); return; }
+
     if(!modal)bind();const values=Array.isArray(items)?items:[items];currentItems=[];
     for(const item of values){if(!item)continue;const book=typeof item==='string'?await B.Api.books.get(item):item;if(book)currentItems.push(book);}
     if(!currentItems.length)return;
     try {
       const available=await B.Api.orders.result(B.supabase.from('bv_books').select('id').in('id',currentItems.map(b=>b.id)).eq('active',true));
       if(available.length!==currentItems.length){B.Toast.show('This selection includes an ebook that is not on sale yet.','error');return;}
-      await B.Api.pages.getBalance();
+      if(user) await B.Api.pages.getBalance();
     } catch { B.Toast.show('Checkout is unavailable. Please try again.','error');return; }
     const title=currentItems.length===1?`${currentItems[0].title} · 1 copy`:`${currentItems.length} ebooks`;
     modal.querySelector('[data-checkout-subtitle]').textContent=title;
     const list=modal.querySelector('[data-checkout-items]');list.querySelector('summary').textContent=`View ${currentItems.length} ebooks`;list.querySelector('ul').innerHTML=currentItems.map(book=>`<li>${B.Dom.escapeHTML(book.title)} · ${B.Format.rupees(book.price)}</li>`).join('');list.hidden=currentItems.length<2;
     const saved=B.Storage.read('checkout_draft',{});form.reset();form.elements.name.value=saved.name||'';form.elements.email.value=saved.email||'';form.elements.phone.value=saved.phone||'';form.elements.coupon.value=saved.coupon||'';form.elements.pages.value=saved.pages||'0';
-    verified=true; verifiedEmail=user.email; form.elements.email.value=user.email;
-    form.elements.name.value=saved.name||user.name||'';
+    verified=!!user;verifiedEmail=user?.email||'';form.elements.email.value=user?.email||saved.email||'';
+    form.elements.email.readOnly=!!user;$('#guestVerify').hidden=!!user;$('#guestCodeRow').hidden=true;challenge=null;
+    form.elements.name.value=saved.name||user?.name||'';
     $('[data-checkout-error]').textContent=''; $('.checkout-submit').textContent='BUY NOW';
     auto19=B.Pricing.is19thIST(nowIST());if(auto19){form.elements.coupon.value='TODAY_IS_19';modal.querySelector('[data-remove-auto]').hidden=false;$('.discount-message').textContent='Auto-applied today · 19% off';}else modal.querySelector('[data-remove-auto]').hidden=true;
     setMode(auto19?'coupon':B.AuthStore.get()?'pages':'coupon');if(saved.pages&&!auto19)form.elements.pages.value=saved.pages;
@@ -73,7 +101,7 @@
     try {
       const details = {name,email,phone,books:currentItems.map(book=>book.id).sort(),
         bits:activeMode==='pages'?pricing.pagesUsed:0, coupon:activeMode==='coupon'?form.elements.coupon.value.trim().toUpperCase():'',
-        expectedAmount:pricing.total*100};
+        expectedAmount:Math.round(pricing.total*100)};
       const result=await B.Api.orders.createOrder(details);
       if(result.paid) { location.assign(new URL('thankyou.html?order_id='+result.id,document.baseURI)); return; }
       await loadCashfree();

@@ -226,3 +226,4 @@ input[name="otp"]::placeholder{letter-spacing:0}
 .toast.ok{background:#14a05a}
 .toast.err{background:#d9304a}
 @media (prefers-reduced-motion:reduce){.verify::after{animation:none;opacity:0}.toast{transition-duration:.01ms}}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));z-index:999;width:max-content;max-width:92vw;min-height:46px;padding:13px 23px;font:700 16px/1.4 system-ui;text-align:center;border-radius:12px;box-shadow:0 6px 20px #0003}

@@ -41,3 +41,9 @@ test('scratch-card weights total 100', () => assert.equal(Pricing.SCRATCH_ODDS.r
 
 console.log(`\n${passed} pricing tests passed.`);
 
+
+{
+ const pricing=require('../js/lib/pricing.js');
+ const order=pricing.calculateOrder({items:[{price:100},{price:125}],mode:'coupon',couponCode:'BOOKIVO'});
+ if(order.discountTotal!==2.5 || order.total!==222.5)throw Error('BOOKIVO threshold or paise precision');
+}

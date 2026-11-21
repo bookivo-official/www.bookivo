@@ -14,6 +14,7 @@ global.fetch=async(url,opt={})=>{
   }
   if(u.hostname!=='db.example.test')throw Error('Unexpected outgoing request');
   if(u.pathname.endsWith('/user'))return opt.headers.Authorization==='Bearer fixture'?json({id:order.user_id,email:'test@example.test',email_confirmed_at:'2026-11-20'}):json({},401);
+  if(u.pathname.endsWith('/bv_session_current'))return json(true);
   if(u.pathname.endsWith('/bv_orders'))return json([order]);
   if(u.pathname.endsWith('/bv_prepare'))return json(order);
   if(u.pathname.endsWith('/bv_events'))return json(seen.has(u.searchParams.get('event_id').slice(3))?[{}]:[]);
