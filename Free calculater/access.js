@@ -1,4 +1,5 @@
 (async function(){
+  if(!await window.bookivoReady)return;
   const config=window.BOOKIVO_SUPABASE_CONFIG;
   const client=window.supabase.createClient(config.url,config.publishableKey);
   const {data,error}=await client.auth.getUser();
