@@ -57,10 +57,14 @@
     }
     function position() {
       if (panel.hidden) return;
-      const anchor = launcher.getBoundingClientRect();
-      panel.style.setProperty('--prime-right', Math.max(8,innerWidth-anchor.right)+'px');
-      panel.style.setProperty('--prime-bottom', (innerHeight-anchor.top+8)+'px');
-      panel.style.setProperty('--prime-space', Math.max(0,anchor.top-18)+'px');
+      // Use layout coordinates, not a hover-transformed anchor. Keyboard resizing must not move the dock in a loop.
+      const viewport = w.visualViewport;
+      const visibleBottom = viewport ? viewport.offsetTop + viewport.height : innerHeight;
+      const anchorBottom = parseFloat(getComputedStyle(actions || launcher).bottom) || 10;
+      const bottom = Math.max(innerHeight-visibleBottom+8, anchorBottom+launcher.offsetHeight+8);
+      panel.style.setProperty('--prime-right', (innerWidth <= 760 ? 10 : 16)+'px');
+      panel.style.setProperty('--prime-bottom', bottom+'px');
+      panel.style.setProperty('--prime-space', Math.max(160,innerHeight-bottom-(viewport?.offsetTop || 0)-12)+'px');
     }
     async function refreshLimit() {
       const left = await B.Api.chat.remaining();
@@ -70,7 +74,7 @@
     function show(open) {
       panel.hidden = !open;
       launcher.setAttribute('aria-expanded',String(open));
-      if (open) { position(); messages.scrollTop = messages.scrollHeight; void refreshLimit(); }
+      if (open) { position(); messages.scrollTop = messages.scrollHeight; void refreshLimit().catch(()=>{ panel.querySelector('.chat-limit').textContent='Unable to check availability. Please try again.'; }); }
     }
     function restore() { if (!ready) return; restoreConversation(); show(storage.sessionRead('prime_open',false)); }
     document.addEventListener('click',event=>{
@@ -111,7 +115,7 @@
     w.addEventListener('pageshow',restore);
     w.addEventListener('resize',position);
     w.visualViewport?.addEventListener('resize',position);
-    new ResizeObserver(position).observe(launcher);
+    css.addEventListener('load',position);
     B.AuthStore?.subscribe(()=>{ if ((B.AuthStore.get()?.id || null) !== account) restore(); });
     if (auth) auth.onAuthStateChange((_event,session)=>{
       const next = session?.user?.id || null;

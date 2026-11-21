@@ -54,3 +54,8 @@ button.prime-standalone{position:fixed;right:12px;bottom:calc(12px + env(safe-ar
 .prime-standalone svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}
 @media (max-height:550px){#chatModal .prime-header{padding:8px 15px}#chatModal .prime-header h2{font-size:19px}#chatModal .chat-intro{display:none}#chatModal .chat-body{padding:6px 10px}}
 @media (forced-colors:active){.floating-actions :is(.contact-fab,.chat-fab) span,.prime-standalone span{color:ButtonText}}
+
+/* Stable dock: keyboard/hover must not animate its anchor or panel geometry. */
+#chatModal{transform:none!important;transition:none!important;animation:none!important}
+body .floating-actions .chat-fab:hover,button.prime-standalone:hover{transform:none}
+@media(max-width:760px){#chatModal{width:calc(100vw - 20px);border-radius:20px}#chatModal input{font-size:16px}.floating-actions button{font-size:12px}}
