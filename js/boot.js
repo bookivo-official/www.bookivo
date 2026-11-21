@@ -14,6 +14,6 @@
   const scripts=(page==='lp'?lean:common).concat(pageScript[page]||'js/pages/not-found.js');
   const root=new URL('../',document.currentScript.src);
   function load(path){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=new URL(path,root).href;s.onload=resolve;s.onerror=()=>reject(new Error('Could not load '+path));document.head.appendChild(s);});}
-  (async()=>{try{await load('js/vendor/supabase/supabase.js');await load('supabase-config.js');for(const path of scripts)await load(path);await window.Bookivo.AuthStore.ready;await window.Bookivo.Runtime.start();}catch(error){console.error('[Bookivo] startup failed',error);const main=document.getElementById('pageMain');if(main)main.innerHTML='<div class="empty-state"><h1>We could not load this page</h1><p>Please refresh and try again.</p></div>';}})();
+  (async()=>{try{await load('js/vendor/supabase/supabase.js');await load('supabase-config.js');await load('js/store-status.js');if(!await window.bookivoReady)return;for(const path of scripts)await load(path);await window.Bookivo.AuthStore.ready;await window.Bookivo.Runtime.start();}catch(error){console.error('[Bookivo] startup failed',error);const main=document.getElementById('pageMain');if(main)main.innerHTML='<div class="empty-state"><h1>We could not load this page</h1><p>Please refresh and try again.</p></div>';}})();
 })();
 

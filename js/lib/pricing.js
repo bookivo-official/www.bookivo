@@ -24,6 +24,21 @@
     let label = '';
     let requestedPages = 0;
     const code = String(input.couponCode || '').trim().toUpperCase();
+    const offers=typeof window!=='undefined' ? window.bookivoSettings?.offers : input.offers;
+    if(mode==='coupon' && offers && code){
+      const offer=offers.find(o=>o.code===code && code!=='PARTNER_PATTERN') || (/^BOOKIVO\d{3,}$/.test(code) && offers.find(o=>o.code==='PARTNER_PATTERN'));
+      let remaining=Math.min(offer?.cap??Infinity,Math.max(0,subtotal*100-100));
+      const byId=new Map();
+      for(const item of [...items].sort((a,b)=>String(a.id).localeCompare(String(b.id)))){
+        const price=Math.round(item.price*100);
+        const cents=offer && price>offer.minimum ? Math.min(remaining,Math.round(price*offer.percent/100)):0;
+        remaining-=cents;byId.set(item.id,cents/100);
+      }
+      const lines=items.map(item=>({...item,discount:byId.get(item.id),total:item.price-byId.get(item.id)}));
+      const discountTotal=lines.reduce((n,i)=>n+i.discount,0);
+      if(!discountTotal)warnings.push('This offer is unavailable for these ebooks.');
+      return {lines,subtotal,total:subtotal-discountTotal,discountTotal,appliedLabel:discountTotal?code:'',pagesUsed:0,warnings};
+    }
     if (mode === 'coupon') {
       if (code === 'TODAY_IS_19') {
         if (is19thIST(now)) { couponRate = 19; label = '19th-day code, 19%'; }

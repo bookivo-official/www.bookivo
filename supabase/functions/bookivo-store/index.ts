@@ -159,6 +159,8 @@ Deno.serve(async request=>{
     const raw=await requestBytes(request);
     if(new URL(request.url).pathname.endsWith("/webhook"))return response(await webhook(request,raw));
     const body=JSON.parse(new TextDecoder().decode(raw));
+    const [controls]=await database("bv_controls?id=eq.1&select=disabled");
+    requireValue(!controls?.disabled,503,"BOOKIVO is temporarily unavailable.");
     const ip=await digest(request.headers.get("cf-connecting-ip")||request.headers.get("x-forwarded-for")?.split(",").pop()?.trim()||"shared");
     if(body.action==="prime"){
       requireValue(typeof body.text==="string" && body.text.trim() && body.text.length<=500,400,"Enter a shorter question.");
@@ -232,6 +234,7 @@ Deno.serve(async request=>{
       Number.isSafeInteger(body.expectedAmount) && body.expectedAmount>=100 && Number.isInteger(body.bits) && body.bits>=0 && body.bits<=100000 && typeof body.coupon==="string" && body.coupon.length<=32,400,"Check your order details.");
     const ord=await database("rpc/bv_prepare",{p_user:user.id,p_id:body.id,p_books:body.books,p_coupon:body.coupon.toUpperCase(),p_bits:body.bits,p_expected:body.expectedAmount});
     requireValue(ord.amount===body.expectedAmount,409,"The total changed. Refresh checkout.");
+    if(uuid.test(body.visitor||''))await fetch(db+'/rest/v1/bv_attribution',{method:'POST',headers:{apikey:admin,Authorization:'Bearer '+admin,'Content-Type':'application/json',Prefer:'resolution=ignore-duplicates'},body:JSON.stringify({order_id:ord.id,day:new Date(Date.now()+19800000).toISOString().slice(0,10),visitor:body.visitor,device:body.device==='Mobile'?'Mobile':'Desktop',source:String(body.source||'Direct').slice(0,60)})}).catch(()=>{});
     if(ord.status==="paid")return response({paid:true,id:ord.id});
     requireValue(ord.status==="pending" || ord.status==="failed",409,"This payment session has ended.");
     const site=env("BOOKIVO_SITE_URL").replace(/\/+$/,"");

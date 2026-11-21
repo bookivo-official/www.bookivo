@@ -13,6 +13,7 @@ global.fetch=async(url,opt={})=>{
     return json({order_id:order.id,order_status:state,order_currency:'INR',order_amount:amount,customer_details:{customer_id:order.user_id},payment_session_id:'local-session'});
   }
   if(u.hostname!=='db.example.test')throw Error('Unexpected outgoing request');
+  if(u.pathname.endsWith('/bv_controls'))return json([{disabled:false}]);
   if(u.pathname.endsWith('/user'))return opt.headers.Authorization==='Bearer fixture'?json({id:order.user_id,email:'test@example.test',email_confirmed_at:'2026-11-20'}):json({},401);
   if(u.pathname.endsWith('/bv_session_current'))return json(true);
   if(u.pathname.endsWith('/bv_orders'))return json([order]);

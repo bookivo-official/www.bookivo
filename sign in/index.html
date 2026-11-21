@@ -65,10 +65,10 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="../js/vendor/supabase/supabase.js"></script>
-  <script src="../supabase-config.js"></script>
+  <script src="../supabase-config.js"></script><script src="../js/store-status.js"></script>
   <script src="../js/lib/storage.js"></script>
   <script src="../js/api/chat.js"></script>
   <script src="../js/components/chat.js"></script>
-  <script src="script.js"></script>
+  <script>window.bookivoReady.then(open=>{if(open){const script=document.createElement('script');script.src='script.js';document.body.append(script);}}).catch(()=>{document.body.textContent='Sign-in is temporarily unavailable. Please refresh to retry.';});</script>
 </body>
 </html>

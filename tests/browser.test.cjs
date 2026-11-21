@@ -40,6 +40,7 @@ const server=http.createServer((req,res)=>{
         const image = folder ? path.join(folder,endpoint) : path.join(root,book.cover);
         return route.fulfill({path:image,contentType:'image/png',headers:{'access-control-allow-origin':'*'}});
       }
+      if(endpoint==='bv_public_settings')return reply({disabled:false,offers:[],banner:'BOOKIVO'});
       if(endpoint==='bv_books')return reply([{id:'book-2'}]);
       if(endpoint==='user')return reply(user);
       if(endpoint==='bv_profiles')return reply({bits:0,welcome_state:'dismissed'});
@@ -174,7 +175,7 @@ const server=http.createServer((req,res)=>{
     await page.waitForFunction(()=>document.querySelector('iframe').contentDocument.querySelector('#pageNum').textContent==='34 of 114');
     entries=[];await page.reload();await page.getByText('This book is not on your shelf').waitFor();assert.equal(await page.locator('iframe').count(),0);
     const guest=await browser.newContext();
-    await guest.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());
+    await guest.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.request().url().endsWith('/bv_public_settings')?r.fulfill({json:{disabled:false,offers:[]},headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'}}):r.abort());
     const gp=await guest.newPage();await gp.goto(origin+'/read.html?book=book-2');await gp.waitForURL('**/sign%20in/index.html');
     await gp.getByRole('button',{name:'Chat PRIME',exact:true}).click();
     await gp.locator('#chatModal').waitFor();

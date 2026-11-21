@@ -2,3 +2,6 @@ project_id = "bookivo"
 [functions.bookivo-store]
 verify_jwt = false
 
+
+[functions.bookivo-admin]
+verify_jwt = false
