@@ -42,3 +42,5 @@ body[data-page="read"] #pageMain{width:100%;max-width:none;margin:0;padding:0 cl
 .library-reader .page-expanded iframe{border:0;border-radius:0}
 .cart-layout.is-empty{grid-template-columns:minmax(0,1fr)}
 .cart-layout.is-empty #cartEmpty{width:100%;margin-inline:auto;padding:clamp(40px,6vw,88px) 20px;text-align:center}
+
+.book-gallery--landscape .book-main-cover{width:100%;aspect-ratio:16/9;background:#faf4e9}.book-gallery--landscape .book-main-cover img,.book-gallery--landscape .book-thumbs img{object-fit:contain}.book-gallery--landscape .book-thumbs button{flex:0 0 88px;width:88px;height:56px;background:#faf4e9}

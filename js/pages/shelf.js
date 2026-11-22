@@ -15,7 +15,7 @@
     const full=new Set(),arrivals=new Set(JSON.parse(sessionStorage.getItem('bv_shelf_arrivals')||'[]'));
     function tile(row){
       const book=row.book, started=row.reading_status==='currently_reading';
-      return `<a class="shelf-volume ${arrivals.has(book.id)?'arriving':''}" href="read.html?book=${encodeURIComponent(book.id)}" title="${esc(book.title)}"><img src="${esc(book.cover)}" alt="${esc(book.title)}"><span>${started?'Continue · p. '+row.last_page:row.reading_status==='finished'?'Read again':'Start reading'}</span>${started?`<progress value="${row.last_page}" max="${book.pages}" aria-label="Reading progress"></progress>`:''}</a>`;
+      return `<a class="shelf-volume ${arrivals.has(book.id)?'arriving':''}" href="read.html?book=${encodeURIComponent(book.id)}" title="${esc(book.title)}"><img src="${esc(book.cover)}" alt="${esc(book.title)}"><span>${book.id==='book-3'?'Download PDF':started?'Continue · p. '+row.last_page:row.reading_status==='finished'?'Read again':'Start reading'}</span>${started?`<progress value="${row.last_page}" max="${book.pages}" aria-label="Reading progress"></progress>`:''}</a>`;
     }
     function invite(){
       return `<a class="shelf-volume shelf-discovery" href="${esc(discovery.folder)}/index.html" aria-label="Explore ${esc(discovery.title)}, ₹25"><img src="${esc(discovery.cover)}" alt=""><span>Add to your collection · ₹25</span><b>Explore book →</b></a>`;

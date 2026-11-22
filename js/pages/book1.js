@@ -30,7 +30,7 @@
     });
     const oldPrice = page.querySelector('.price-old');
     const discountBadge = page.querySelector('.price-row .badge');
-    const hasDiscount = book.id === 'cookbook' || (Number(book.mrp) > Number(book.price) && Math.floor((1 - Number(book.price) / Number(book.mrp)) * 100) <= 20);
+    const hasDiscount = book.id === 'cookbook' || (Number(book.mrp) > Number(book.price));
     if (oldPrice) { oldPrice.textContent = B.Format.rupees(book.id === 'cookbook' ? 199 : book.mrp); oldPrice.hidden = !hasDiscount; }
     if (discountBadge) { discountBadge.textContent = book.id === 'cookbook' ? '50% OFF' : `${Math.floor((1 - Number(book.price) / Number(book.mrp)) * 100)}% OFF`; discountBadge.hidden = !hasDiscount; }
     document.title = `${book.title} — Bookivo`;
@@ -59,6 +59,7 @@
     }));
     w.BookivoBookCanReview = !!B.AuthStore.get() && await B.Api.orders.owns(book.id);
     await loadBookPageScript(bookFolder);
+    B.ProductOffer.bind(book,page.querySelector('.purchase-row'),page.querySelector('[data-book-price]'));
   }
   B.PageHandlers.book1 = init;
 })(window);

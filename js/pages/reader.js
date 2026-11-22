@@ -14,6 +14,10 @@
       root.innerHTML='<section class="empty-state"><h1>This book is not on your shelf</h1><a class="btn btn-primary">Explore book</a></section>';
       root.querySelector('a').href=local.folder?local.folder+'/index.html':'books.html';return;
     }
+    if(local.downloadOnly){
+      root.innerHTML='<section class="download-reader"><a href="my-books.html">Back to My Shelf</a><h1>'+B.Dom.escapeHTML(local.title)+'</h1><p>Preview is unavailable for this ebook. You can download the complete PDF here and read it on your device.</p><button class="btn btn-primary" data-download>DOWNLOAD NOW</button></section>';
+      root.querySelector('[data-download]').onclick=e=>B.Download.start(local,e.currentTarget);return;
+    }
     const book=entry.book, bucket=B.supabase.storage.from('bookivo-private-books');
     root.innerHTML=`<section class="library-reader"><header><a href="my-books.html">← My Shelf</a><strong>${B.Dom.escapeHTML(book.title)}</strong><button data-unread>Mark unread</button><button data-finish hidden>Mark finished</button></header><p role="status" data-save></p><div data-stage></div></section>`;
     const note=root.querySelector('[data-save]'), finish=root.querySelector('[data-finish]');

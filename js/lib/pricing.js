@@ -31,7 +31,7 @@
       const byId=new Map();
       for(const item of [...items].sort((a,b)=>String(a.id).localeCompare(String(b.id)))){
         const price=Math.round(item.price*100);
-        const cents=offer && price>offer.minimum ? Math.min(remaining,Math.round(price*offer.percent/100)):0;
+        const cents=offer && (!offer.book_ids || offer.book_ids.includes(item.id)) && price>offer.minimum ? Math.min(remaining,Math.round(price*offer.percent/100)):0;
         remaining-=cents;byId.set(item.id,cents/100);
       }
       const lines=items.map(item=>({...item,discount:byId.get(item.id),total:item.price-byId.get(item.id)}));

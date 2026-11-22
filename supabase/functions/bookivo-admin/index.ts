@@ -64,7 +64,9 @@ Deno.serve(async req=>{
  const path='bv_offers?code=eq.'+code;
  if(a==='delete')await db(path,'DELETE');
  else if(a==='enable'||a==='disable')await db(path,'PATCH',{enabled:a==='enable'});
- else{const values={percent:b.percent,minimum:b.minimum,cap:b.cap,starts:b.starts,expires:b.expires,auto:!!b.auto,listed:!!b.listed,description:String(b.description||'').slice(0,180)};
+ else{const ids=b.book_ids;
+ if(ids!==null && ids!==undefined){if(!Array.isArray(ids)||!ids.length||ids.length>100||!ids.every((id:unknown)=>typeof id==='string'&&/^[a-z0-9-]{1,80}$/.test(id)))fail('Select valid ebooks.');const books=await db('bv_books?select=id');if(ids.some((id:string)=>!books.some((book:any)=>book.id===id)))fail('An ebook no longer exists.');}
+ const values={book_ids:ids==null?null:[...new Set(ids)],show_product:!!b.show_product,percent:b.percent,minimum:b.minimum,cap:b.cap,starts:b.starts,expires:b.expires,auto:!!b.auto,listed:!!b.listed,description:String(b.description||'').slice(0,180)};
  await db(a==='create'?'bv_offers':path,a==='create'?'POST':'PATCH',a==='create'?{...values,code}:values);}
  return send({ok:true});
  }

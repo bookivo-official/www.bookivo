@@ -5,6 +5,7 @@
     async function success(order){const user=B.AuthStore.get();const items=order.items||[];const amount=order.pricing?order.pricing.total:items.reduce((s,x)=>s+x.price,0);const successPanel=root.querySelector('[data-state="success"]');
       successPanel.innerHTML='<h1>Your books are on My Shelf</h1><p>Payment confirmed · '+B.Format.rupees(amount)+'</p><p>Order '+B.Dom.escapeHTML(order.orderId)+'</p><a class="btn btn-primary" href="my-books.html">Open My Shelf</a>';
       if(order.guest) successPanel.querySelector('p').textContent='Payment confirmed. Sign in with your verified checkout email to read your books.';
+      for(const item of items){const book=await B.Api.books.get(item.id);if(book?.downloadOnly){const button=document.createElement('button');button.className='btn btn-primary';button.textContent='Download your ebook — '+book.title;button.onclick=()=>B.Download.start(book,button);successPanel.append(button);}}
       sessionStorage.removeItem('bv_checkout');
       sessionStorage.setItem('bv_shelf_arrivals',JSON.stringify(items.map(i=>i.id)));
       show('success');if(!B.Storage.read('purchase_tracked_'+order.orderId,false)){B.Track.event('Purchase',{value:amount,currency:'INR',order_id:order.orderId});B.Storage.write('purchase_tracked_'+order.orderId,true);}for(const item of items) await B.Api.cart.remove(item.id);B.Confetti.fire();}

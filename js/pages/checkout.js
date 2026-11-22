@@ -88,8 +88,9 @@
     form.elements.email.readOnly=!!user;$('#guestVerify').hidden=!!user;$('#guestCodeRow').hidden=true;challenge=null;
     form.elements.name.value=saved.name||user?.name||'';
     $('[data-checkout-error]').textContent=''; $('.checkout-submit').textContent='BUY NOW';
-    const automatic=(window.bookivoSettings?.offers||[]).find(o=>o.auto && o.code!=='PARTNER_PATTERN' && currentItems.some(i=>i.price*100>o.minimum));auto19=!!automatic;if(auto19){form.elements.coupon.value=automatic.code;modal.querySelector('[data-remove-auto]').hidden=false;$('.discount-message').textContent='Offer applied';}else modal.querySelector('[data-remove-auto]').hidden=true;
+    const automatic=(window.bookivoSettings?.offers||[]).find(o=>o.auto && o.code!=='PARTNER_PATTERN' && currentItems.some(i=>i.price*100>o.minimum && (!o.book_ids || o.book_ids.includes(i.id))));auto19=!!automatic;if(auto19){form.elements.coupon.value=automatic.code;modal.querySelector('[data-remove-auto]').hidden=false;$('.discount-message').textContent='Offer applied';}else modal.querySelector('[data-remove-auto]').hidden=true;
     setMode(auto19?'coupon':B.AuthStore.get()?'pages':'coupon');if(saved.pages&&!auto19)form.elements.pages.value=saved.pages;
+    const selected=sessionStorage.getItem('bv_selected_coupon');if(selected && B.Pricing.calculateOrder({items:currentItems,mode:'coupon',couponCode:selected,nowIST:new Date()}).discountTotal>0){form.elements.coupon.value=selected;auto19=false;setMode('coupon');await applyCoupon();}
     updateButton();B.Track.event('InitiateCheckout',{content_ids:currentItems.map(book=>book.id),value:currentItems.reduce((sum,book)=>sum+book.price,0),currency:'INR'});B.Modal.open(modal);
   }
   async function submit(event){

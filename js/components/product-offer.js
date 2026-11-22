@@ -1,0 +1,12 @@
+(function(B){
+ B.ProductOffer={bind(book,anchor,price){
+  if(!anchor||!price)return;
+  const offers=(window.bookivoSettings?.offers||[]).filter(o=>o.show_product && o.code!=='PARTNER_PATTERN' && (!o.book_ids||o.book_ids.includes(book.id)));
+  const ranked=offers.map(o=>({offer:o,result:B.Pricing.calculateOrder({items:[book],mode:'coupon',couponCode:o.code,nowIST:new Date()})})).filter(x=>x.result.discountTotal>0).sort((a,b)=>b.result.discountTotal-a.result.discountTotal);
+  if(!ranked.length)return;const {offer,result}=ranked[0];
+  const line=document.createElement('p');line.className='product-offer';
+  const label=document.createElement('span');label.textContent='You have a coupon: '+offer.code+' ';const btn=document.createElement('button');btn.type='button';btn.textContent='APPLY NOW';line.append(label,btn);anchor.after(line);
+  btn.onclick=()=>{sessionStorage.setItem('bv_selected_coupon',offer.code);price.replaceChildren();const total=document.createElement('strong');total.textContent=B.Format.rupees(result.total);const before=document.createElement('del');before.textContent=B.Format.rupees(book.price);price.append(total,' ',before);const sticky=document.querySelector('[data-sticky-buy] strong');if(sticky)sticky.textContent=B.Format.rupees(result.total);label.textContent=offer.code+' applied. Save '+B.Format.rupees(result.discountTotal)+' at checkout. ';btn.textContent='APPLIED';btn.disabled=true;const buy=document.querySelector('#buyNowBtn');if(buy)buy.textContent='Buy Now · '+B.Format.rupees(result.total);B.Toast.show('Coupon applied','success');};
+ }};
+ B.Download={async start(book,button){const old=button.textContent;button.disabled=true;button.textContent='Preparing download…';try{const r=await fetch(book.fileUrl);if(!r.ok)throw Error('Download unavailable. Please retry.');const blob=await r.blob();const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='BOOKIVO-AI-Toolkit.pdf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(e){B.Toast.show(e.message||'Download failed. Please retry.','error');}finally{button.disabled=false;button.textContent=old;}}};
+})(window.Bookivo);

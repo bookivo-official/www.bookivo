@@ -1,0 +1,21 @@
+BOOKIVO AI Toolkit release
+
+Book 3: The AI Toolkit: Turn Everyday Tasks into Done. INR199, 38-page downloadable PDF.
+PDF repository: https://github.com/bookivo-official/book3 (public, as requested).
+PDF: https://raw.githubusercontent.com/bookivo-official/book3/main/BOOKIVO-AI-Toolkit.pdf
+The paid PDF is not stored in Supabase Storage. Supabase contains its product/order metadata.
+
+PRIME: Set OPENROUTER_API_KEY in Supabase > Edge Functions > Secrets.
+OPENROUTER_MODEL is optional; default openrouter/free (https://openrouter.ai/openrouter/free).
+This uses available free models, so availability/rate limits vary. Set an explicit paid model later without changing source.
+Never place the key in frontend files. Full system prompt: docs/PRIME-system-prompt.txt.
+
+Admin > Coupons: choose All ebooks or Selected ebooks, select one or more titles, then choose separately whether the offer appears on Coupons and below purchase controls. Server-side checkout enforces the selected titles and discount limits.
+BOOKIVO remains a manual 2% coupon for individual ebooks priced above INR100. AI Toolkit is INR195.02 after applying BOOKIVO.
+
+Deployment: migration toolkit_and_scoped_offers applied; bookivo-store and bookivo-admin deployed.
+Cashfree remains sandbox with the existing allowlist. Production payments still require the production rollout and payment verification described in existing launch documentation. Google OAuth and guest-email sender configuration still require the previously requested credentials.
+
+Validation: pricing/database/payment suites; admin browser suite; storefront responsive reader/chat regression suite; new toolkit gallery/coupon/copy/download/ownership tests. No real payment was made.
+
+Gallery assets in BOOK-3/images: hero.png, inside.png, journey.png, learn.png, beginners.png. cover.png preserves the supplied cover. Inside and beginners use actual PDF pages 7, 22 and 34, with the laptop result clearly labelled illustrative. Hero, journey and learning infographic were generated using the imagegen tool with cream/navy/coral BOOKIVO styling and the supplied cover as reference.

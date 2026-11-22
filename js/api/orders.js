@@ -45,7 +45,7 @@
         const guestToken=sessionStorage.getItem('bv_guest_token');
         if(!guestToken){signIn();return null;}
         const order=await action('status',{id,guestToken});
-        return {orderId:id,status:order.status,guest:true};
+        return {orderId:id,status:order.status,guest:true,items:order.items||[],pricing:{total:(order.amount||0)/100}};
       }
       let row=await result(B.supabase.from('bv_orders').select(selection).eq('id',id).maybeSingle());
       if(!row)return null;

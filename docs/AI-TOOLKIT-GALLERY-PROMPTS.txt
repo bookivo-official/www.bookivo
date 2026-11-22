@@ -1,0 +1,9 @@
+BOOKIVO gallery: built-in image_gen mode (not CLI).
+Final assets: BOOK-3/images/hero.png, journey.png, learn.png.
+
+Reproduction prompt set:
+1. Premium ebook mockup: use the supplied AI Toolkit cover as the reference, preserving readable title and BOOKIVO branding. Render a polished three-dimensional ebook on a clean cream background in a landscape composition. Navy, coral and restrained gold details. Do not invent extra cover text or tool logos.
+2. From idea to result: premium cream/navy/coral BOOKIVO landscape graphic, three clear stages labelled Choose a tool, Follow the steps, Create your result. Show a task becoming a finished result with simple generic visual elements. No tool names or logos. Readable, uncluttered typography.
+3. What you will learn: cream/navy/coral BOOKIVO landscape infographic with six verified topics: 10 AI tools, getting started, practical workflows, 12 reusable prompts, a seven-day plan, and responsible use. Beginner-friendly clear hierarchy, generous spacing. Avoid guarantees about permanently free tools.
+
+Exact-page assets (not generated): inside.png presents pages 7, 22, 34 of the supplied PDF. beginners.png pairs actual page 22 with a clearly labelled illustrative workflow on a laptop frame. These layouts were rendered from HTML using the unmodified PDF page images. cover.png is the supplied original cover.
