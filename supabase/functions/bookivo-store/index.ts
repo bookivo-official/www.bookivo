@@ -2,7 +2,8 @@ const env = (name: string) => Deno.env.get(name) || "";
 const db = env("SUPABASE_URL");
 const admin = env("SUPABASE_SERVICE_ROLE_KEY");
 const apiVersion = "2025-01-01";
-const provider = "https://sandbox.cashfree.com/pg";
+const paymentMode = () => env("CASHFREE_ENVIRONMENT").trim().toLowerCase();
+const provider = () => paymentMode()==="production"?"https://api.cashfree.com/pg":"https://sandbox.cashfree.com/pg";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const headers = {"Access-Control-Allow-Origin":"*", "Access-Control-Allow-Headers":"authorization, apikey, x-client-info, content-type", "Cache-Control":"no-store", "Content-Type":"application/json"};
 
@@ -43,15 +44,16 @@ async function customer(request: Request) {
   return user;
 }
 function paymentSettings() {
-  requireValue(env("CASHFREE_ENVIRONMENT")==="sandbox" && env("CASHFREE_APP_ID") && env("CASHFREE_SECRET_KEY") && /^https:\/\//.test(env("BOOKIVO_SITE_URL")),503,"Sandbox checkout is awaiting merchant configuration.");
+  requireValue(["sandbox","production"].includes(paymentMode()) && env("CASHFREE_APP_ID") && env("CASHFREE_SECRET_KEY") && /^https:\/\//.test(env("BOOKIVO_SITE_URL")),503,"Checkout is awaiting merchant configuration.");
 }
 async function cashfree(path: string, body?: unknown, key?: string, allowMissing = false) {
   const h: Record<string,string> = {"x-api-version":apiVersion,"x-client-id":env("CASHFREE_APP_ID"),"x-client-secret":env("CASHFREE_SECRET_KEY"),"Content-Type":"application/json"};
   if(key) h["x-idempotency-key"]=key;
-  const r = await fetch(provider + path, {method:body ? "POST":"GET",headers:h,body:body ? JSON.stringify(body):undefined});
+  const r = await fetch(provider() + path, {method:body ? "POST":"GET",headers:h,body:body ? JSON.stringify(body):undefined});
   if(allowMissing && r.status===404)return null;
   if(!r.ok) {
     console.error("Cashfree request failed",r.status,r.headers.get("x-request-id"));
+    if(r.status===401||r.status===403)throw new Problem(502,"Cashfree could not authenticate this payment request. Please contact BOOKIVO support.");
     throw new Problem(502,"Cashfree could not confirm this order. Retry with the same checkout.");
   }
   return await r.json();
@@ -162,6 +164,26 @@ Deno.serve(async request=>{
     const [controls]=await database("bv_controls?id=eq.1&select=disabled");
     requireValue(!controls?.disabled,503,"BOOKIVO is temporarily unavailable.");
     const ip=await digest(request.headers.get("cf-connecting-ip")||request.headers.get("x-forwarded-for")?.split(",").pop()?.trim()||"shared");
+    if(body.action==="coupon"){
+      await limit("coupon:"+ip,60,60);
+      const code=String(body.code||"").trim().toUpperCase();
+      const invalid=(message:string)=>response({valid:false,message});
+      if(!code)return invalid("Enter a coupon code.");
+      if(code==="PARTNER_PATTERN"||!/^[A-Z0-9_-]{1,32}$/.test(code))return invalid("You entered the wrong coupon code.");
+      requireValue(Array.isArray(body.books)&&body.books.length>0&&body.books.length<=20&&body.books.every((id:unknown)=>typeof id==="string"&&/^[a-z0-9-]{1,80}$/.test(id)),400,"Select an ebook first.");
+      let [offer]=await database("bv_offers?code=eq."+encodeURIComponent(code));
+      if(!offer && /^BOOKIVO[0-9]{3,}$/.test(code))[offer]=await database("bv_offers?code=eq.PARTNER_PATTERN");
+      if(!offer)return invalid("You entered the wrong coupon code.");
+      if(!offer.enabled)return invalid("This coupon has been disabled.");
+      if(offer.expires&&Date.parse(offer.expires)<=Date.now())return invalid("This coupon has expired.");
+      if(offer.starts&&Date.parse(offer.starts)>Date.now())return invalid("This coupon is not active yet.");
+      if(offer.day19&&new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',day:'numeric'}).format(new Date())!=='19')return invalid("This coupon is available only on the 19th of the month.");
+      const books=await database("bv_books?active=eq.true&select=id,price_paise");
+      const eligible=books.filter((b:any)=>body.books.includes(b.id)&&(!offer.book_ids||offer.book_ids.includes(b.id)));
+      if(!eligible.length)return invalid("This coupon is not available for the selected book.");
+      if(!eligible.some((b:any)=>b.price_paise>offer.minimum))return invalid("This coupon requires an eligible ebook priced above INR "+(offer.minimum/100)+".");
+      return response({valid:true,message:"Coupon applied successfully.",offer:{code,percent:offer.percent,minimum:offer.minimum,cap:offer.cap,book_ids:offer.book_ids,auto:offer.auto}});
+    }
     if(body.action==="prime"){
       requireValue(typeof body.text==="string" && body.text.trim() && body.text.length<=500,400,"Enter a shorter question.");
       requireValue(env("OPENROUTER_API_KEY"),503,"PRIME is temporarily unavailable. Please use Contact Us.");
@@ -228,7 +250,7 @@ Deno.serve(async request=>{
       return response({...state,amount:ord.amount,items:items.map((i:any)=>({id:i.book_id}))});
     }
     requireValue(body.action==="checkout",400,"Unknown request.");
-    requireValue(env("BOOKIVO_SANDBOX_TESTERS").split(",").map(s=>s.trim()).includes(user.id),403,"Checkout is currently open to sandbox testers.");
+    if(paymentMode()==="sandbox")requireValue(env("BOOKIVO_SANDBOX_TESTERS").split(",").map(s=>s.trim()).includes(user.id),403,"Checkout is currently open to sandbox testers.");
     requireValue(uuid.test(body.id) && Array.isArray(body.books) && body.books.length>0 && body.books.length<=20 &&
       body.books.every((s:unknown)=>typeof s==="string" && /^[a-z0-9-]{1,80}$/.test(s)) &&
       /^[6-9]\d{9}$/.test(body.phone) && typeof body.name==="string" && body.name.trim().length>0 && body.name.length<=100 &&
@@ -249,7 +271,7 @@ Deno.serve(async request=>{
       customer_details:{customer_id:user.id,customer_name:body.name.trim(),customer_email:user.email,customer_phone:body.phone},
       order_meta:{return_url:site+"/thankyou.html?order_id="+ord.id,notify_url:db+"/functions/v1/bookivo-store/webhook"}},ord.id);
     requireValue(cf.order_id===ord.id && cf.payment_session_id,502,"Payment session unavailable.");
-    return response({id:ord.id,session:cf.payment_session_id});
+    return response({id:ord.id,session:cf.payment_session_id,mode:paymentMode()});
   } catch(error) {
     if(error instanceof Problem)return response({error:error.message},error.status);
     if(error instanceof SyntaxError)return response({error:"Invalid request."},400);

@@ -1,7 +1,7 @@
 'use strict';
 (function (w) {
   const store = w.Bookivo.Store.create([], 'cart');
-  function cleanIds(ids) { return Array.from(new Set((Array.isArray(ids) ? ids : []).filter(x => typeof x === 'string'))); }
+  function cleanIds(ids) { return Array.from(new Set((Array.isArray(ids) ? ids : []).filter(x => typeof x === 'string' && w.Bookivo.Data.books.some(b=>b.id===x)))); }
   const CartStore = {
     getItems:() => cleanIds(store.get()),
     add(id) { if (!id) return store.get(); return store.set(ids => cleanIds(ids).concat(cleanIds(ids).includes(id) ? [] : [id])); },

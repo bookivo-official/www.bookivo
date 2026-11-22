@@ -9,3 +9,6 @@
 .pages-chip.is-bounce{animation:pages-bounce .42s ease}
 @keyframes pages-bounce{0%,100%{transform:translateY(0)}45%{transform:translateY(-5px)}}
 @media(prefers-reduced-motion:reduce){.pages-chip.is-bounce{animation:none}}
+
+.toast{z-index:300;max-width:min(92vw,560px);width:max-content;text-align:center;border-radius:14px;font-weight:700}.toast[data-type="success"]{background:#138044}.toast[data-type="error"]{background:#d82745}
+.profile-name-dialog{width:min(92vw,440px);border:1px solid #dce6f4;border-radius:24px;padding:28px;color:#14223b;box-shadow:0 20px 70px #10234840}.profile-name-dialog::backdrop{background:#0b1f4b66}.profile-name-dialog form{position:relative}.profile-name-dialog h2{margin-right:26px}.profile-name-dialog label{display:grid;gap:8px;margin:16px 0}

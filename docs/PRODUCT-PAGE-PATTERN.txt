@@ -1,0 +1,15 @@
+BOOKIVO product page pattern — retain for every new ebook
+
+Use the BOOK-1 / BOOK-2 shared product layout: gallery with contained images, five thumbnails where supplied, full-screen preview, product title, price, then Add to Cart and Buy Now immediately below the price. Use existing button styles, not a new generic template.
+Load css/product-layout.css after page styles. This shared responsive layer keeps both actions within the first viewport at 320x568, 390x844 and 1366x768. Keep descriptions, ratings, tags and benefits below the purchase actions on small screens. Never crop preview pages to fill the gallery.
+BOOK-3 uses the BOOK-2 interaction script with BookivoProduct gallery data; do not copy hardcoded image arrays into another script. Product metadata and gallery ordering live in js/data/books.js.
+Only real books belong in the catalogue; currently cookbook, book-2 and book-3. Removed placeholder routes redirect to books.html.
+New product pages must pass tests/toolkit-browser.cjs (purchase buttons initially visible, no overflow, gallery, pricing, coupon application).
+
+Payment release
+CASHFREE_ENVIRONMENT accepts sandbox or production. The Edge Function chooses sandbox.cashfree.com/pg or api.cashfree.com/pg and returns the matching SDK mode to checkout. The sandbox tester restriction applies only to sandbox. Credentials stay in Supabase Edge Function secrets. Never place merchant secrets in website code.
+Set BOOKIVO_SITE_URL to https://bookivo.in and ensure Cashfree has approved that domain. The webhook endpoint remains https://xwfzuqbkckmmzzidmsgf.supabase.co/functions/v1/bookivo-store/webhook . Existing signature, amount, currency, purchaser and successful-payment checks remain enforced.
+Code and mocked production routing verified; no live payment was charged or completed by this release. Confirm one real purchase and its webhook before declaring live payments fully verified.
+
+Coupon validation uses the backend at Apply time and again when preparing an order. Editing the code removes the previously applied discount until Apply is clicked. Wrong, expired, disabled, scheduled, minimum-price and book-scope failures have separate messages. Toasts use the common bottom-centre red/green style for three seconds.
+Google metadata names are used across the store. Missing Google names trigger a 12-character prompt; closing saves bookivouser. Name metadata is display-only, never an authorization rule.

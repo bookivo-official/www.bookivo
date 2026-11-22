@@ -67,13 +67,7 @@ const faqData = [
 ];
 
 /* Gallery images shared between homepage gallery and fullscreen viewer */
-const galleryImages = [
-  { src: 'BOOK-2/images/portrait-prompts-3d-cover.png', alt: '3D cover of 25 Prompts That Create Cinematic Portraits for Girls', duration: 5000 },
-  { src: 'BOOK-2/images/portrait-prompts-five-scenes.png', alt: 'Five cinematic portrait styles in a wide 16 by 9 image', duration: 5000 },
-  { src: 'BOOK-2/images/portrait-prompts-alisa-pages.png', alt: 'Two sample pages featuring ALISA', duration: 5000 },
-  { src: 'BOOK-2/images/portrait-prompts-flower-royal-pages.png', alt: 'Sample pages with floral portraits and a royal queen style', duration: 5000 },
-  { src: 'BOOK-2/images/portrait-prompts-three-page-preview.png', alt: 'Three-page ebook preview', duration: 5000 }
-];
+const galleryImages = window.BookivoProduct.gallery.map((src,i)=>({src,alt:window.BookivoProduct.title+' preview '+(i+1),duration:5000}));
 
 /* ============================================
    Scroll-triggered reveal animations

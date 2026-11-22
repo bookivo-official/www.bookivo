@@ -45,7 +45,7 @@ const server=http.createServer((req,res)=>{
       if(endpoint==='user')return reply(user);
       if(endpoint==='bv_profiles')return reply({bits:0,welcome_state:'dismissed'});
       if(endpoint==='bv_library')return libraryError?reply({message:'Offline'},503):reply(entries);
-      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);if(body.action==='prime')return reply({reply:'Once payment is confirmed, open My Shelf.'});return body.action==='checkout'?reply({id:body.id,session:'offline-session'}):reply({revision:body.revision+1});}
+      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);if(body.action==='prime')return reply({reply:'Once payment is confirmed, open My Shelf.'});return body.action==='checkout'?reply({id:body.id,session:'offline-session',mode:'production'}):reply({revision:body.revision+1});}
       return reply([]);
     });
     page.on('pageerror',e=>errors.push(e.message));
@@ -66,7 +66,7 @@ const server=http.createServer((req,res)=>{
         assert.ok(help.y>=brand.y+brand.height,'Footer sections do not overlap');
       }
     }
-    await page.goto(origin+'/books.html');await page.waitForFunction(()=>document.querySelector('#catalogCount')?.textContent.includes('12'));
+    await page.goto(origin+'/books.html');await page.waitForFunction(()=>document.querySelector('#catalogCount')?.textContent.includes('3'));
     // PRIME stays alongside the storefront and survives full document navigation.
     const prime = page.locator('#chatModal');
     for (const width of [1440, 390]) {

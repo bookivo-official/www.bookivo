@@ -58,19 +58,7 @@
   };
   const toolkitBook = {"id": "book-3", "slug": "ai-toolkit", "title": "The AI Toolkit: Turn Everyday Tasks into Done", "subtitle": "10 powerful free AI tools. One practical beginner\u2019s guide.", "author": "the_samsonpaul", "category": "Self Growth", "tags": ["AI", "productivity", "beginner", "tools", "workflows"], "price": 199, "mrp": 199, "pages": 38, "format": "Downloadable PDF", "language": "English", "badges": ["new"], "releasedAt": "2026-11-22", "folder": "BOOK-3", "cover": "BOOK-3/images/cover.png", "gallery": ["BOOK-3/images/hero.png", "BOOK-3/images/inside.png", "BOOK-3/images/journey.png", "BOOK-3/images/learn.png", "BOOK-3/images/beginners.png"], "preview": [], "description": "Go from \u201cwhere do I start?\u201d to your first useful AI project. This 38-page guide brings together ten tool walkthroughs, twelve reusable prompts, five practical workflows and a seven-day action plan.", "learn": ["Understand what each of ten AI tools can do and how to get started.", "Follow practical steps for summaries, visuals, content and small apps.", "Adapt twelve reusable prompts and combine tools into five workflows.", "Build a habit with a seven-day plan and learn about privacy, licences and free-plan limits."], "chapters": [{"title": "Start with confidence", "subtitle": "Before you start, five ground rules and a quick way to choose your first tool."}, {"title": "Ten guided tool walkthroughs", "subtitle": "Practical introductions and setup steps for learning, content creation and productivity."}, {"title": "Put the tools to work", "subtitle": "Five workflows, an at-a-glance comparison and twelve reusable prompts."}, {"title": "Build your own routine", "subtitle": "A seven-day action plan and realistic guidance about changing free plans."}], "faq": [{"q": "What will I receive?", "a": "A 38-page PDF ebook. Download it after successful payment or later from My Shelf."}, {"q": "Can I read this ebook inside BOOKIVO?", "a": "This title is download-only. Open the downloaded PDF in your preferred PDF reader."}, {"q": "Are the AI tools free forever?", "a": "No guarantee. The guide explains free plans and their limits; providers can change pricing, availability and usage terms."}], "sampleUrl": "", "fileUrl": "https://raw.githubusercontent.com/bookivo-official/book3/main/BOOKIVO-AI-Toolkit.pdf", "downloadOnly": true, "isReal": true};
   cookbook.folder = 'BOOK-1';
-  const cookbookCopies = Array.from({ length: 12 }, (_, index) => {
-    const number = index + 1;
-    if (number === 1) return cookbook;
-    if (number === 2) return portraitBook;
-    if (number === 3) return toolkitBook;
-    const copy = JSON.parse(JSON.stringify(cookbook));
-    copy.id = `book-${number}`;
-    copy.slug = `bachelor-99-survival-cookbook-${number}`;
-    copy.folder = `BOOK-${number}`;
-    return copy;
-  });
-  roadBook.catalog = false;
-  books.splice(0, books.length, ...cookbookCopies, roadBook);
+  books.splice(0, books.length, cookbook, portraitBook, toolkitBook);
   w.Bookivo.Data = w.Bookivo.Data || {};
   w.Bookivo.Data.books = books;
 })(window);

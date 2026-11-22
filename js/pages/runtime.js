@@ -17,6 +17,7 @@
       }
       B.Track.event('PageView');
       if (B.PageHandlers[page]) await B.PageHandlers[page]();
+      B.ensureProfileName?.().catch(()=>{});
     }
   };
 })(window);

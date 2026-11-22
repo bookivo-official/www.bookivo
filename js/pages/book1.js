@@ -58,7 +58,8 @@
       rating: review.rating
     }));
     w.BookivoBookCanReview = !!B.AuthStore.get() && await B.Api.orders.owns(book.id);
-    await loadBookPageScript(bookFolder);
+    w.BookivoProduct=book;
+    await loadBookPageScript(book.id==='book-3'?'BOOK-2':bookFolder);
     B.ProductOffer.bind(book,page.querySelector('.purchase-row'),page.querySelector('[data-book-price]'));
   }
   B.PageHandlers.book1 = init;

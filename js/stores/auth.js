@@ -10,7 +10,7 @@
     const metadata = user.user_metadata || {};
     return {
       id: user.id,
-      name: metadata.username || metadata.full_name || metadata.name || String(user.email || '').split('@')[0],
+      name: metadata.username || metadata.full_name || metadata.name || localStorage.getItem('bv_name_'+user.id) || 'bookivouser',
       email: user.email || '',
       createdAt: user.created_at || null,
       avatarUrl: metadata.avatar_url || null

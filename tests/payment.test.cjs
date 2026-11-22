@@ -3,16 +3,21 @@ const assert=require('node:assert/strict'),{createHmac}=require('node:crypto');
 const order={id:'20000000-0000-0000-0000-000000000001',user_id:'10000000-0000-0000-0000-000000000001',amount:2500,status:'pending'};
 const secret='local-test-fixture';
 const env={SUPABASE_URL:'https://db.example.test',SUPABASE_SERVICE_ROLE_KEY:'fixture',SUPABASE_ANON_KEY:'public-fixture',CASHFREE_ENVIRONMENT:'sandbox',CASHFREE_APP_ID:'fixture',CASHFREE_SECRET_KEY:secret,BOOKIVO_SITE_URL:'https://book.example.test',BOOKIVO_SANDBOX_TESTERS:order.user_id};
+let offer={code:'TEST',enabled:true,percent:10,minimum:0,book_ids:['book-2']};let calledHost;
 let handler,state='ACTIVE',amount=25,success=true,settles=0;const seen=new Set();
 global.Deno={env:{get:key=>env[key]},serve:fn=>{handler=fn;}};
 const json=(obj,status=200)=>new Response(JSON.stringify(obj),{status});
 global.fetch=async(url,opt={})=>{
   const u=new URL(url);
-  if(u.hostname==='sandbox.cashfree.com'){
+  if(['sandbox.cashfree.com','api.cashfree.com'].includes(u.hostname)){calledHost=u.hostname;
     if(u.pathname.endsWith('/payments'))return json(success?[{order_id:order.id,payment_status:'SUCCESS',payment_amount:amount,payment_currency:'INR'}]:[]);
     return json({order_id:order.id,order_status:state,order_currency:'INR',order_amount:amount,customer_details:{customer_id:order.user_id},payment_session_id:'local-session'});
   }
   if(u.hostname!=='db.example.test')throw Error('Unexpected outgoing request');
+  if(u.pathname.endsWith('/bv_limit'))return json(true);
+  if(u.pathname.endsWith('/bv_offers'))return json(offer?[offer]:[]);
+  if(u.pathname.endsWith('/bv_books'))return json([{id:'book-2',price_paise:2500},{id:'book-3',price_paise:19900}]);
+  if(u.pathname.endsWith('/bv_order_items'))return json([{book_id:'book-2'}]);
   if(u.pathname.endsWith('/bv_controls'))return json([{disabled:false}]);
   if(u.pathname.endsWith('/user'))return opt.headers.Authorization==='Bearer fixture'?json({id:order.user_id,email:'test@example.test',email_confirmed_at:'2026-11-20'}):json({},401);
   if(u.pathname.endsWith('/bv_session_current'))return json(true);
@@ -43,6 +48,14 @@ const auth={Authorization:'Bearer fixture'};
   for(const [provider,expected] of [['TERMINATED','cancelled'],['EXPIRED','expired']]){
     order.status='pending';state=provider;assert.equal((await (await body('',{action:'status',id:order.id},auth)).json()).status,expected);
   }
+  order.status='pending';state='ACTIVE';env.CASHFREE_ENVIRONMENT='production';env.BOOKIVO_SANDBOX_TESTERS='';
+  const live=await (await body('',selection,auth)).json();assert.equal(live.mode,'production');assert.equal(live.session,'local-session');assert.equal(calledHost,'api.cashfree.com');
+  env.CASHFREE_ENVIRONMENT='invalid';assert.equal((await body('',selection,auth)).status,503);env.CASHFREE_ENVIRONMENT='production';
+  const validate=async()=>await (await body('',{action:'coupon',code:'TEST',books:['book-2']})).json();
+  assert.equal((await validate()).valid,true);offer.expires='2000-01-01';assert.match((await validate()).message,/expired/);delete offer.expires;
+  offer.starts='2099-01-01';assert.match((await validate()).message,/not active/);delete offer.starts;
+  offer.book_ids=['book-3'];assert.match((await validate()).message,/selected book/);offer.book_ids=null;offer.minimum=10000;assert.match((await validate()).message,/priced above/);offer.enabled=false;assert.match((await validate()).message,/disabled/);offer=null;assert.match((await validate()).message,/wrong/);
+  console.log('PASS: production routing and SDK mode, coupon wrong/expired/future/scope/threshold/disabled cases; sandbox tests');
   console.log('PASS: sandbox allowlist, authentication, session, pending/cancelled/expired, signatures, amounts, successful payment evidence and duplicate delivery');
 })().catch(e=>{console.error(e);process.exitCode=1});
 

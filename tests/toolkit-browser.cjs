@@ -42,26 +42,34 @@ const server=http.createServer((req,res)=>{
         return route.fulfill({path:image,contentType:'image/png',headers:{'access-control-allow-origin':'*'}});
       }
       if(endpoint==='bv_public_settings')return reply({disabled:false,offers:[{code:'BOOKIVO',percent:2,minimum:10000,cap:null,listed:true,show_product:true,book_ids:['book-3']}],banner:'BOOKIVO'});
-      if(endpoint==='bv_books')return reply([{id:'book-2'},{id:'book-3'}].filter(b=>!url.searchParams.get('id')||url.searchParams.get('id').includes(b.id)));
+      if(endpoint==='bv_books')return reply([{id:'cookbook'},{id:'book-2'},{id:'book-3'}].filter(b=>!url.searchParams.get('id')||url.searchParams.get('id').includes(b.id)));
       if(endpoint==='user')return reply(user);
       if(endpoint==='bv_profiles')return reply({bits:0,welcome_state:'dismissed'});
       if(endpoint==='bv_library')return libraryError?reply({message:'Offline'},503):reply(entries);
-      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);if(body.action==='prime')return reply({reply:'Once payment is confirmed, open My Shelf.'});return body.action==='checkout'?reply({id:body.id,session:'offline-session'}):reply({revision:body.revision+1});}
+      if(endpoint==='bookivo-store'){const body=route.request().postDataJSON();writes.push(body);if(body.action==='coupon')return reply(body.code==='BOOKIVO'?{valid:true,message:'Coupon applied successfully.',offer:{code:'BOOKIVO',percent:2,minimum:10000,cap:null,book_ids:['book-3']}}:{valid:false,message:'You entered the wrong coupon code.'});if(body.action==='prime')return reply({reply:'Once payment is confirmed, open My Shelf.'});return body.action==='checkout'?reply({id:body.id,session:'offline-session',mode:'production'}):reply({revision:body.revision+1});}
       return reply([]);
     });
     page.on('pageerror',e=>errors.push(e.message));
 
     await page.goto(origin+'/BOOK-3/index.html');await page.getByRole('heading',{name:'The AI Toolkit: Turn Everyday Tasks into Done',exact:true}).waitFor();
-    assert.equal(await page.locator('[data-gallery-index]').count(),5);
-    await page.getByRole('button',{name:'APPLY NOW',exact:true}).click();
-    assert.match(await page.locator('.book-price').textContent(),/195\.02/);
-    assert.match(await page.locator('[data-sticky-buy] strong').textContent(),/195\.02/);
-    assert.equal(await page.evaluate(()=>sessionStorage.getItem('bv_selected_coupon')),'BOOKIVO');
-    await page.locator('[data-book-buy]').click();await page.locator('#checkoutModal').waitFor();assert.equal(await page.locator('#checkoutModal [name=coupon]').inputValue(),'BOOKIVO');assert.match(await page.locator('#checkoutModal').textContent(),/195\.02/);await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.thumb').count(),5);
+    await page.getByRole('button',{name:'APPLY NOW',exact:true}).click();await page.waitForFunction(()=>document.querySelector('[data-book-price]').textContent.includes('195.02'));
+    assert.match(await page.locator('[data-book-price]').textContent(),/195\.02/);
 
-    const faq=page.locator('[data-accordion-trigger]');await faq.nth(0).click();await faq.nth(1).click();assert.equal(await page.locator('.accordion-item.is-open').count(),1);assert.equal(await faq.nth(0).getAttribute('aria-expanded'),'false');
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem('bv_selected_coupon')),'BOOKIVO');
+    await page.locator('#buyNowBtn').click();await page.locator('#checkoutModal').waitFor();assert.equal(await page.locator('#checkoutModal [name=coupon]').inputValue(),'BOOKIVO');assert.match(await page.locator('#checkoutModal').textContent(),/195\.02/);await page.locator('#checkoutModal [name=coupon]').fill('WRONG');assert.equal(await page.locator('[data-grand-total]').textContent(),'₹199');await page.locator('[data-apply-coupon]').click();await page.getByText('You entered the wrong coupon code.',{exact:true}).first().waitFor();assert.equal(await page.locator('#bookivo-toast').getAttribute('data-type'),'error');await page.locator('#checkoutModal [name=coupon]').fill('BOOKIVO');assert.equal(await page.locator('[data-grand-total]').textContent(),'₹199');await page.locator('[data-apply-coupon]').click();await page.waitForFunction(()=>document.querySelector('[data-grand-total]').textContent==='₹195.02');await page.keyboard.press('Escape');
+
+    const faq=page.locator('.product-info .accordion-trigger');await faq.nth(0).click();await faq.nth(1).click();assert.equal(await page.locator('.accordion-item.open').count(),1);assert.equal(await faq.nth(0).getAttribute('aria-expanded'),'false');
     for(const width of [390,1440]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
     await page.locator('.site-footer').scrollIntoViewIfNeeded();const author=await page.locator('.footer-author').boundingBox(),social=await page.locator('.social-strip').boundingBox();assert.ok(author.x>social.x+social.width-1);await page.screenshot({path:path.join(root,'../.bookivo-qa/toolkit-footer.png')});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(root,'../.bookivo-qa/toolkit-product.png')});
+    for(const [width,height] of [[320,568],[390,844],[1366,768]]){
+      await page.setViewportSize({width,height});
+      for(const n of [1,2,3]){await page.goto(origin+'/BOOK-'+n+'/index.html');await page.waitForFunction(()=>!!window.BookivoProduct||document.querySelector('#addToCartBtn')?.textContent.includes('Add'));await page.locator('#buyNowBtn').waitFor();
+       for(const id of ['buyNowBtn','addToCartBtn']){const box=await page.locator('#'+id).boundingBox();assert.ok(box.y>=0&&box.y+box.height<=height,'Above fold '+n+' '+width+' '+id+' '+JSON.stringify(box));}
+       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+       await page.screenshot({path:path.join(root,'../.bookivo-qa/product-'+n+'-'+width+'.png')});
+      }
+    }
     await page.goto(origin+'/coupons.html');await page.getByRole('button',{name:'Copy code',exact:true}).first().click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),'BOOKIVO');
     entries=[{...row,book_id:'book-3',book:{id:'book-3',title:'AI Toolkit',pages:38,cover:'BOOK-3/images/cover.png'}}];
     await page.goto(origin+'/read.html?book=book-3');await page.getByRole('button',{name:'DOWNLOAD NOW',exact:true}).waitFor();assert.equal(await page.locator('iframe').count(),0);
@@ -74,6 +82,10 @@ const server=http.createServer((req,res)=>{
     await page.getByRole('button',{name:/Download your ebook/}).waitFor();
     await page.evaluate(async()=>{Bookivo.Api.orders.getStatus=async()=>({status:'cancelled',orderId:'test',items:[]});await Bookivo.PageHandlers.thankyou();});
     assert.equal(await page.getByRole('button',{name:/Download your ebook/}).count(),0);
+    await page.goto(origin+'/index.html');await page.locator('#home-books .book-card').first().waitFor();assert.equal(await page.locator('#home-books .book-card').count(),3);
+    await page.evaluate(async()=>{const session={user:{id:'google-test',app_metadata:{provider:'google'},user_metadata:{}}};Bookivo.supabase.auth.getSession=async()=>({data:{session}});Bookivo.supabase.auth.updateUser=async({data})=>({data:{user:{user_metadata:data}}});Bookivo.AuthStore.set({id:'google-test',name:'bookivouser'});await Bookivo.ensureProfileName();});
+    await page.getByLabel('Your name',{exact:true}).waitFor();assert.equal(await page.getByLabel('Your name',{exact:true}).getAttribute('maxlength'),'12');await page.getByRole('button',{name:'Close name prompt'}).click();assert.equal(await page.evaluate(()=>Bookivo.AuthStore.get().name),'bookivouser');
+    await page.evaluate(async()=>{localStorage.removeItem('bv_name_google-test');await Bookivo.ensureProfileName();});await page.getByLabel('Your name',{exact:true}).fill('Samson');await page.getByRole('button',{name:'Save name',exact:true}).click();assert.equal(await page.evaluate(()=>Bookivo.AuthStore.get().name),'Samson');
     assert.deepEqual(errors,[]);console.log('PASS toolkit gallery, responsive product page, scoped Apply Now, FAQ exclusivity, copy code, download without navigation, ownership and paid-only download controls.');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>server.close());

@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="images/logo.png"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/shell.css"><link rel="stylesheet" href="css/pages.css"><link rel="stylesheet" href="BOOK-1/book.css">
+<link rel="stylesheet" href="css/product-layout.css">
 </head>
 <body data-page="book1">
 
@@ -68,6 +69,11 @@
           <span class="price-old" hidden></span>
           <span class="price-new" data-book-price>₹99</span>
           <span class="badge" hidden></span>
+        </div><div class="purchase-row" data-reveal><button class="btn btn-secondary" id="addToCartBtn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Add to Cart
+          </button>
+          <button class="btn btn-primary btn-shine" id="buyNowBtn">Buy It Now</button>
         </div>
 
         <ul class="benefits" data-reveal>
@@ -77,12 +83,7 @@
           <li><span class="check">✓</span> Perfect for Beginners</li>
         </ul>
 
-        <div class="purchase-row" data-reveal><button class="btn btn-secondary" id="addToCartBtn">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            Add to Cart
-          </button>
-          <button class="btn btn-primary btn-shine" id="buyNowBtn">Buy It Now</button>
-        </div>
+
 
         <div class="payment-icons" data-reveal><span>UPI</span><span>Cards</span><span>Netbanking</span><span>Wallets</span></div>
 
@@ -273,8 +274,3 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div></main><div id="shell-footer"></div><div id="shell-floating"></div><script src="js/boot.js"></script>
 </body>
 </html>
-
-
-
-
-
