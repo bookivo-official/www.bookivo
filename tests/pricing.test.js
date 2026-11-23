@@ -45,5 +45,10 @@ console.log(`\n${passed} pricing tests passed.`);
 {
  const pricing=require('../js/lib/pricing.js');
  const order=pricing.calculateOrder({items:[{price:100},{price:125}],mode:'coupon',couponCode:'BOOKIVO'});
- if(order.discountTotal!==2.5 || order.total!==222.5)throw Error('BOOKIVO threshold or paise precision');
+ if(order.discountTotal!==3 || order.total!==222)throw Error('BOOKIVO threshold or paise precision');
 }
+
+test('rounds the payable total down to whole rupees',()=>{
+ const r=Pricing.calculateOrder({items:[{id:'book-3',price:199}],mode:'coupon',couponCode:'SALE',offers:[{code:'SALE',percent:75,minimum:0,cap:null}]});
+ assert.equal(r.total,49);assert.equal(r.discountTotal,150);assert.equal(r.lines[0].total,49);
+});

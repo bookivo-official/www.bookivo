@@ -54,10 +54,10 @@ const {PGlite}=require('@electric-sql/pglite');
   assert.equal((await one('select bv_session_current() as ok')).ok,false);
   await sql(`reset role;insert into bv_offers(code,percent,book_ids) values('TOOLKIT_ONLY',10,array['book-3']);`);
   await assert.rejects(()=>db.query(`select bv_prepare('${b}','30000000-0000-0000-0000-000000000001',array['cookbook'],'TOOLKIT_ONLY',0,8910)`));
-  const mixed=await one(`select (bv_prepare('${b}','30000000-0000-0000-0000-000000000002',array['cookbook','book-3'],'TOOLKIT_ONLY',0,27810)).*`);
-  assert.equal(mixed.amount,27810);
+  const mixed=await one(`select (bv_prepare('${b}','30000000-0000-0000-0000-000000000002',array['cookbook','book-3'],'TOOLKIT_ONLY',0,27800)).*`);
+  assert.equal(mixed.amount,27800);
   assert.equal((await one(`select discount from bv_order_items where order_id='${mixed.id}' and book_id='cookbook'`)).discount,0);
-  assert.equal((await one(`select discount from bv_order_items where order_id='${mixed.id}' and book_id='book-3'`)).discount,1990);
+  assert.equal((await one(`select discount from bv_order_items where order_id='${mixed.id}' and book_id='book-3'`)).discount,2000);
   await db.close();console.log('PASS: database migration, pricing, retry, settlement, progress, welcome reward and private storage roles');
 })().catch(e=>{console.error(e.message);process.exitCode=1});
 

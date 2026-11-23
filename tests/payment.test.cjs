@@ -14,6 +14,7 @@ global.fetch=async(url,opt={})=>{
     return json({order_id:order.id,order_status:state,order_currency:'INR',order_amount:amount,customer_details:{customer_id:order.user_id},payment_session_id:'local-session'});
   }
   if(u.hostname!=='db.example.test')throw Error('Unexpected outgoing request');
+  if(u.pathname.endsWith('/bv_guest_checkout'))return json(u.searchParams.get('order_id')==='eq.'+order.id && u.searchParams.get('proof')==='eq.'+require('node:crypto').createHash('sha256').update('40000000-0000-0000-0000-000000000001').digest('hex')?[{user_id:order.user_id,email:'test@example.test'}]:[]);
   if(u.pathname.endsWith('/bv_limit'))return json(true);
   if(u.pathname.endsWith('/bv_offers'))return json(offer?[offer]:[]);
   if(u.pathname.endsWith('/bv_books'))return json([{id:'book-2',price_paise:2500},{id:'book-3',price_paise:19900}]);
@@ -51,6 +52,13 @@ const auth={Authorization:'Bearer fixture'};
   order.status='pending';state='ACTIVE';env.CASHFREE_ENVIRONMENT='production';env.BOOKIVO_SANDBOX_TESTERS='';
   const live=await (await body('',selection,auth)).json();assert.equal(live.mode,'production');assert.equal(live.session,'local-session');assert.equal(calledHost,'api.cashfree.com');
   env.CASHFREE_ENVIRONMENT='invalid';assert.equal((await body('',selection,auth)).status,503);env.CASHFREE_ENVIRONMENT='production';
+  const guestToken='40000000-0000-0000-0000-000000000001';
+  assert.equal((await body('',{...selection,email:'test@example.test',guestToken})).status,200);
+  assert.equal((await body('',{...selection,email:'different@example.test',guestToken})).status,400);
+  assert.equal((await body('',{...selection,email:'test@example.test',bits:10,guestToken})).status,400);
+  assert.equal((await body('',{action:'status',id:'20000000-0000-0000-0000-000000000099',guestToken})).status,401);
+  assert.equal((await body('',{action:'status',id:order.id,guestToken:'40000000-0000-0000-0000-000000000002'})).status,401);
+  console.log('PASS: guest order proof cannot access another order, mismatched email, Bits or invalid proof');
   const validate=async()=>await (await body('',{action:'coupon',code:'TEST',books:['book-2']})).json();
   assert.equal((await validate()).valid,true);offer.expires='2000-01-01';assert.match((await validate()).message,/expired/);delete offer.expires;
   offer.starts='2099-01-01';assert.match((await validate()).message,/not active/);delete offer.starts;

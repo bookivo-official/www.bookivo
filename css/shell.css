@@ -302,3 +302,9 @@ body[data-page="home"] .why-card:hover{transform:translateY(-6px);box-shadow:var
 
 @media(min-width:761px){.site-footer{display:grid;grid-template-columns:1fr 1fr;column-gap:40px}.footer-grid,.footer-bottom{grid-column:1/-1}.site-footer .social-strip{grid-column:1;grid-row:2;margin-top:26px}.site-footer .footer-author{grid-column:2;grid-row:2;align-self:center;width:100%;max-width:none;margin-top:26px}.site-footer .footer-author:hover{text-decoration:none}}
 .product-offer{padding:12px 14px;background:#eef6ff;border:1px solid #d3e7ff;border-radius:12px;font-size:14px}.product-offer button{background:none;border:0;color:#1455cb;font-weight:800;padding:8px;cursor:pointer}.download-reader{max-width:800px;margin:8vh auto;padding:32px;background:#f4f8ff;border:1px solid #dde8f7;border-radius:24px}.download-reader h1{font-size:clamp(28px,4vw,44px)}.thankyou-state>.btn{margin:8px}.coupon-card button{margin-top:16px}.book-price del{font-size:18px;color:#657389}
+
+/* The wrapper itself must remain sticky, not just its short-lived child. */
+#shell-announcement{position:sticky;top:0;z-index:55}#shell-announcement .announcement{position:relative;top:auto}
+@media(max-width:860px){html body:is([data-page="book"],[data-page="book1"]) .floating-actions{bottom:calc(8px + env(safe-area-inset-bottom,0px))}}
+
+html{scroll-padding-top:130px}

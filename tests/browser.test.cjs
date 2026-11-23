@@ -90,8 +90,8 @@ const server=http.createServer((req,res)=>{
       await prime.getByRole('button',{name:'Send message'}).click();
       await prime.getByText(/Once payment is confirmed/).first().waitFor();
       await prime.getByRole('textbox').fill('Unsent question');
-      await page.getByRole('link',{name:'Browse ebooks',exact:true}).click();
-      await page.waitForURL('**/books.html');
+      await page.goto(origin+'/books.html');
+      await page.waitForURL(/books\.html(?:\?|$)/);
       await prime.waitFor();
       assert.equal(await prime.getByRole('textbox').inputValue(),'Unsent question');
       await prime.getByText(/Once payment is confirmed/).first().waitFor();
@@ -194,9 +194,9 @@ const server=http.createServer((req,res)=>{
     const guest=await browser.newContext();
     await guest.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.request().url().endsWith('/bv_public_settings')?r.fulfill({json:{disabled:false,offers:[]},headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'}}):r.abort());
     const gp=await guest.newPage();await gp.goto(origin+'/read.html?book=book-2');await gp.waitForURL('**/sign%20in/index.html');
-    await gp.getByRole('button',{name:'Chat PRIME',exact:true}).click();
-    await gp.locator('#chatModal').waitFor();
+    assert.equal(await gp.getByRole('button',{name:'Chat PRIME',exact:true}).count(),0);
     await gp.goto(origin+'/books.html');
+    await gp.getByRole('button',{name:'Chat PRIME',exact:true}).click();
     await gp.locator('#chatModal').waitFor();
     await gp.getByRole('button',{name:'Close Chat PRIME'}).click();
     await guest.close();

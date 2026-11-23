@@ -14,7 +14,7 @@ const supabaseClient = configured ? window.supabase.createClient(SUPABASE_URL, S
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 }) : null;
 
-window.Bookivo.Chat.init(supabaseClient?.auth);
+
 
 /* ============ 2. UI: slide login panel up / down ============ */
 const card = document.getElementById("card");
@@ -90,6 +90,7 @@ function setupOtp(form, mode, msgEl) {
     if (mode === "signup") options.data = { username: form.username.value.trim(), signup_attempt: signupAttempt };
     let result;
     try {
+      if(mode==='signup'){const {data,error}=await supabaseClient.functions.invoke('bookivo-store',{body:{action:'account-exists',email:e}});if(error)throw new Error('Could not check your email. Please retry.');if(data.exists){resetVerifyBtn();loginForm.email.value=e;setOpen(true);return toast('You already have an account. Please log in.','err');}}
       result = await supabaseClient.auth.signInWithOtp({ email: e, options });
     } catch (error) {
       resetVerifyBtn();

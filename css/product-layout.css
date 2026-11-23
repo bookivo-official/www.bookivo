@@ -11,14 +11,23 @@
 .book-page .thumb-strip{gap:8px;padding:10px 0}.book-page .thumb{width:70px;height:50px;flex:0 0 70px}.book-page .thumb img{object-fit:contain}
 .toolkit-book-page .gallery-main{background:#fbf3e7}.book-page .product-section [data-reveal]{opacity:1;transform:none}
 @media(max-width:860px){
- .book-page .product-section{padding:12px 16px 28px}.book-page .product-grid{grid-template-columns:1fr;gap:8px}
- .book-page .gallery-main{height:clamp(120px,25svh,230px);padding:8px;border-radius:16px}
- .book-page .thumb-strip{padding:5px 0}.book-page .thumb{height:38px;width:55px;flex-basis:55px}
- .book-page .product-info>.eyebrow{display:none}.book-page .product-title{font-size:clamp(23px,5.5vw,32px);line-height:1.06}
- .book-page .product-info>.price-row{margin:8px 0 5px}.book-page .price-new{font-size:26px}
- .book-page .purchase-row .btn{min-height:44px;font-size:12px;padding:8px}.book-page .product-info>.purchase-row{grid-template-columns:1fr 1fr}
- .book-page .portrait-subtitle{font-size:14px;margin:8px 0}.book-page .portrait-tags{margin:8px 0;padding-bottom:8px}
+ .book-page .product-section{padding:14px 12px 32px}.book-page .product-grid{grid-template-columns:1fr;gap:14px}
+ .book-page .gallery-main{height:auto;aspect-ratio:16/9;padding:0;border-radius:18px;width:100%;min-height:0}
+ .book-page .gallery-main img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+ .book-page .thumb-strip{padding:8px 0}.book-page .thumb{height:46px;width:64px;flex-basis:64px}
+ .book-page .product-info>.eyebrow{display:none}.book-page .product-title{font-size:clamp(26px,6vw,34px);line-height:1.12}
+ .book-page .product-info>.portrait-subtitle,.book-page .product-info>.benefits{order:2!important}
+ .book-page .product-info>.price-row{order:3;margin:14px 0 10px}.book-page .price-new{font-size:30px}
+ .book-page .product-info>.purchase-row{order:4;grid-template-columns:1fr 1fr;margin-bottom:14px}
+ .book-page .product-info>.product-offer{order:5}
+ .book-page .product-info>:not(.eyebrow):not(.product-title):not(.price-row):not(.purchase-row):not(.product-offer):not(.portrait-subtitle):not(.benefits){order:6}
+ .book-page .purchase-row .btn{min-height:48px;font-size:13px;padding:10px 8px}
+ .book-page .portrait-subtitle{font-size:16px;line-height:1.5;margin:12px 0}
+ .book-page #mobilePurchaseBar{display:none!important}
 }
-@media(max-height:650px) and (max-width:860px){.book-page .gallery-main{height:112px}.book-page .thumb-strip{display:none}.book-page .product-title{font-size:23px}.book-page .product-section{padding-top:8px}}
-
+@media(min-width:861px){
+ .book-page #mobilePurchaseBar{left:50%;right:auto;bottom:16px;width:360px;max-width:calc(100vw - 32px);padding:10px 14px;gap:18px;border-radius:18px;transform:translate(-50%,140%)}
+ .book-page #mobilePurchaseBar.visible,.book-page #mobilePurchaseBar.is-visible{transform:translate(-50%,0)}
+ .book-page #mobilePurchaseBar .btn{flex:1;min-height:44px;padding:8px 20px}
+}
 .book-page [hidden]{display:none!important}

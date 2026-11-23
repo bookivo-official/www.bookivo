@@ -1,0 +1,30 @@
+BOOKIVO launch update — 23 November 2026
+
+Included
+- Checkout no longer sends or requires a guest email OTP. Account sign-in still verifies ownership before opening a private bookshelf.
+- Guest order access is tied to a random proof for that specific order, never just the typed email.
+- New payable totals are rounded down to whole rupees in both the browser and database. Example: 49.75 becomes 49.
+- Cashfree checkout uses the backend-returned environment. Production requests use api.cashfree.com and the production checkout SDK mode.
+- Mobile product galleries are 16:9, descriptions precede purchase buttons, and support buttons sit at the bottom.
+- Desktop purchase buttons remain initially visible; the scrolling Buy Now bar is compact and centred.
+- Announcement stays at the top. Mobile sign-in has no PRIME launcher or empty vertical scrolling.
+- Existing signup emails switch to Login with a red notification.
+
+Deployment
+Supabase project: xwfzuqbkckmmzzidmsgf
+bookivo-store: version 21
+Migration: 20261123140709_guest_checkout_whole_rupees.sql
+Storefront: https://bookivo.in
+
+Checks passed
+Local database, pricing and payment tests; guest order isolation; reader and chat regression tests; responsive product and checkout browser tests; deployed public coupon endpoint.
+Browser/payment tests simulate Cashfree. They do not charge real money or prove the merchant account can accept live payments.
+
+Before announcing launch
+1. Make one small real purchase, check the amount, successful payment webhook, order status and delivery. Also test cancelled/failed payment and the refund process.
+2. Confirm bookivo.in is approved in Cashfree and the production merchant account is activated. Keep CASHFREE_APP_ID and CASHFREE_SECRET_KEY only in Supabase secrets, CASHFREE_ENVIRONMENT=production, BOOKIVO_SITE_URL=https://bookivo.in.
+3. Finish Google OAuth credentials if still pending. Verify email sign-in delivery and support replies reach real inboxes.
+4. Confirm the latest prices, coupon terms, contact details and policies. Test all three ebooks on a real phone.
+5. Book 3 remains publicly downloadable on GitHub, as requested; anyone with its public URL can access it without purchasing.
+
+Cashfree integration reference: https://www.cashfree.com/docs/payments/online/web/redirect

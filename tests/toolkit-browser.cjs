@@ -53,11 +53,11 @@ const server=http.createServer((req,res)=>{
 
     await page.goto(origin+'/BOOK-3/index.html');await page.getByRole('heading',{name:'The AI Toolkit: Turn Everyday Tasks into Done',exact:true}).waitFor();
     assert.equal(await page.locator('.thumb').count(),5);
-    await page.getByRole('button',{name:'APPLY NOW',exact:true}).click();await page.waitForFunction(()=>document.querySelector('[data-book-price]').textContent.includes('195.02'));
-    assert.match(await page.locator('[data-book-price]').textContent(),/195\.02/);
+    await page.getByRole('button',{name:'APPLY NOW',exact:true}).click();await page.waitForFunction(()=>document.querySelector('[data-book-price]').textContent.includes('195'));
+    assert.match(await page.locator('[data-book-price]').textContent(),/195/);
 
     assert.equal(await page.evaluate(()=>sessionStorage.getItem('bv_selected_coupon')),'BOOKIVO');
-    await page.locator('#buyNowBtn').click();await page.locator('#checkoutModal').waitFor();assert.equal(await page.locator('#checkoutModal [name=coupon]').inputValue(),'BOOKIVO');assert.match(await page.locator('#checkoutModal').textContent(),/195\.02/);await page.locator('#checkoutModal [name=coupon]').fill('WRONG');assert.equal(await page.locator('[data-grand-total]').textContent(),'₹199');await page.locator('[data-apply-coupon]').click();await page.getByText('You entered the wrong coupon code.',{exact:true}).first().waitFor();assert.equal(await page.locator('#bookivo-toast').getAttribute('data-type'),'error');await page.locator('#checkoutModal [name=coupon]').fill('BOOKIVO');assert.equal(await page.locator('[data-grand-total]').textContent(),'₹199');await page.locator('[data-apply-coupon]').click();await page.waitForFunction(()=>document.querySelector('[data-grand-total]').textContent==='₹195.02');await page.keyboard.press('Escape');
+    await page.locator('#buyNowBtn').click();await page.locator('#checkoutModal').waitFor();assert.equal(await page.locator('#checkoutModal [name=coupon]').inputValue(),'BOOKIVO');assert.match(await page.locator('#checkoutModal').textContent(),/195/);await page.locator('#checkoutModal [name=coupon]').fill('WRONG');assert.equal(await page.locator('[data-grand-total]').textContent(),'₹199');await page.locator('[data-apply-coupon]').click();await page.getByText('You entered the wrong coupon code.',{exact:true}).first().waitFor();assert.equal(await page.locator('#bookivo-toast').getAttribute('data-type'),'error');await page.locator('#checkoutModal [name=coupon]').fill('BOOKIVO');assert.equal(await page.locator('[data-grand-total]').textContent(),'₹199');await page.locator('[data-apply-coupon]').click();await page.waitForFunction(()=>document.querySelector('[data-grand-total]').textContent==='₹195');await page.keyboard.press('Escape');
 
     const faq=page.locator('.product-info .accordion-trigger');await faq.nth(0).click();await faq.nth(1).click();assert.equal(await page.locator('.accordion-item.open').count(),1);assert.equal(await faq.nth(0).getAttribute('aria-expanded'),'false');
     for(const width of [390,1440]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
@@ -65,7 +65,8 @@ const server=http.createServer((req,res)=>{
     for(const [width,height] of [[320,568],[390,844],[1366,768]]){
       await page.setViewportSize({width,height});
       for(const n of [1,2,3]){await page.goto(origin+'/BOOK-'+n+'/index.html');await page.waitForFunction(()=>!!window.BookivoProduct||document.querySelector('#addToCartBtn')?.textContent.includes('Add'));await page.locator('#buyNowBtn').waitFor();
-       for(const id of ['buyNowBtn','addToCartBtn']){const box=await page.locator('#'+id).boundingBox();assert.ok(box.y>=0&&box.y+box.height<=height,'Above fold '+n+' '+width+' '+id+' '+JSON.stringify(box));}
+       if(width>=861)for(const id of ['buyNowBtn','addToCartBtn']){const box=await page.locator('#'+id).boundingBox();assert.ok(box.y>=0&&box.y+box.height<=height,'Above fold '+n+' '+width+' '+id+' '+JSON.stringify(box));}
+       if(width<861){const gallery=await page.locator('.gallery-main').boundingBox();assert.ok(Math.abs(gallery.width/gallery.height-16/9)<0.02);const desc=page.locator(n===1?'.benefits':'.portrait-subtitle');const d=await desc.boundingBox(),b=await page.locator('#buyNowBtn').boundingBox();assert.ok(b.y>=d.y+d.height);}
        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
        await page.screenshot({path:path.join(root,'../.bookivo-qa/product-'+n+'-'+width+'.png')});
       }

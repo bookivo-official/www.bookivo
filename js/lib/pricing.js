@@ -37,7 +37,7 @@
       const lines=items.map(item=>({...item,discount:byId.get(item.id),total:item.price-byId.get(item.id)}));
       const discountTotal=lines.reduce((n,i)=>n+i.discount,0);
       if(!discountTotal)warnings.push('This offer is unavailable for these ebooks.');
-      return {lines,subtotal,total:subtotal-discountTotal,discountTotal,appliedLabel:discountTotal?code:'',pagesUsed:0,warnings};
+      return whole({lines,subtotal,total:subtotal-discountTotal,discountTotal,appliedLabel:discountTotal?code:'',pagesUsed:0,warnings});
     }
     if (mode === 'coupon') {
       if (code === 'TODAY_IS_19') {
@@ -74,8 +74,9 @@
       return { id: item.id, title: item.title, price, discount, total: price - discount };
     });
     const discountTotal = lines.reduce((sum, line) => sum + line.discount, 0);
-    return { lines, subtotal, discountTotal, total: subtotal - discountTotal, appliedLabel: discountTotal ? label : '', pagesUsed, warnings };
+    return whole({ lines, subtotal, discountTotal, total: subtotal - discountTotal, appliedLabel: discountTotal ? label : '', pagesUsed, warnings });
   }
+  function whole(result){let cents=Math.round(result.total*100)%100;result.rounding=cents/100;for(const line of [...result.lines].sort((a,b)=>b.discount-a.discount || String(b.id).localeCompare(String(a.id)))){const take=Math.min(cents,Math.round(line.total*100));line.discount+=take/100;line.total-=take/100;cents-=take;}result.total=Math.floor(Math.round(result.total*100)/100);result.discountTotal=result.subtotal-result.total;return result;}
   function pagesEarned(items) { return (items || []).reduce((sum, item) => sum + (Number(item.price) > 249 ? 50 : 0), 0); }
   return { COUPONS, SCRATCH_ODDS, getISTDate, is19thIST, clampPercent, calculateOrder, pagesEarned };
 });

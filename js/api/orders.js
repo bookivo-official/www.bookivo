@@ -37,12 +37,13 @@
       const saved=JSON.parse(sessionStorage.getItem('bv_checkout')||'null');
       const id=saved?.fingerprint===fingerprint ? saved.id : crypto.randomUUID();
       sessionStorage.setItem('bv_checkout',JSON.stringify({id,fingerprint}));
+      if(!B.AuthStore.get()){let token=sessionStorage.getItem('bv_guest_token_'+id);if(!token){token=crypto.randomUUID();sessionStorage.setItem('bv_guest_token_'+id,token);}await action('guest-start',{id,email:details.email,token});sessionStorage.setItem('bv_guest_token',token);}
       try { return await action('checkout',{...details,id,guestToken:B.AuthStore.get()?undefined:sessionStorage.getItem('bv_guest_token')}); }
       catch(error){if(error.message==='This payment session has ended.')sessionStorage.removeItem('bv_checkout');throw error;}
     },
     async getStatus(id){
       if(!B.AuthStore.get()){
-        const guestToken=sessionStorage.getItem('bv_guest_token');
+        const guestToken=sessionStorage.getItem('bv_guest_token_'+id)||sessionStorage.getItem('bv_guest_token');
         if(!guestToken){signIn();return null;}
         const order=await action('status',{id,guestToken});
         return {orderId:id,status:order.status,guest:true,items:order.items||[],pricing:{total:(order.amount||0)/100}};
