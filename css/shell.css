@@ -27,7 +27,7 @@
 
 
 
-.brand img{width:48px;height:48px;border-radius:50%;object-fit:contain;background:#fff}
+.brand img{width:48px;height:48px;border-radius:50%;object-fit:contain;background:transparent}
 .pages-chip{gap:8px;color:#116fb4;background:#eff7ff}
 .pages-chip img{width:28px;height:28px;object-fit:contain;border-radius:50%}
 .secondary-nav__inner a,.secondary-nav__inner button{position:relative;flex:0 0 auto;height:100%;border:0!important;padding:0 2px;opacity:.82;transition:color .22s ease,opacity .22s ease}
@@ -38,7 +38,7 @@
 .secondary-nav__inner a[aria-current="page"]::after{transform:scaleX(1);opacity:1}
 .site-footer{background:#05070b;color:#fff}
 .site-footer .footer-brand{display:flex;align-items:center;gap:10px}
-.site-footer .footer-brand img{width:46px;height:46px;border-radius:50%;object-fit:contain;background:#fff}
+.site-footer .footer-brand img{width:46px;height:46px;border-radius:50%;object-fit:contain;background:transparent}
 .site-footer p,.site-footer a{color:#d5d9e2}
 .site-footer .finance-disclaimer{color:#aeb5c3!important}
 .social-strip>strong{display:block;font-size:15px;letter-spacing:.07em;color:#fff}

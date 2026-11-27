@@ -19,7 +19,7 @@ const server=http.createServer((req,res)=>{
  const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
  try{
  const ctx=await browser.newContext({viewport:{width:390,height:844}}),page=await ctx.newPage(),writes=[];
- await ctx.addInitScript(()=>{window.Cashfree=options=>({checkout:async details=>{window.testCheckout={options,details};return {};}});});
+ await ctx.addInitScript(()=>{window.Cashfree=options=>({checkout:async details=>{window.testCheckout={options,details};return window.testGatewayResult||{error:{message:"Payment window closed."}};}});});
  await ctx.route('**/*',r=>{const u=new URL(r.request().url());if(u.origin===origin)return r.continue();if(!u.hostname.endsWith('.supabase.co'))return r.abort();
  const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*'};if(r.request().method()==='OPTIONS')return r.fulfill({status:200,headers});
  let value=[];if(u.pathname.endsWith('bv_public_settings'))value={disabled:false,banner:'BOOKIVO knowledge for your future',offers:[]};
@@ -35,8 +35,13 @@ const server=http.createServer((req,res)=>{
  const dock=await page.locator('.floating-actions').boundingBox();assert.ok(844-dock.y-dock.height<=12,'dock at bottom');
  await page.locator('#buyNowBtn').click();await page.locator('#checkoutModal.is-open').waitFor();assert.equal(await page.locator('#guestVerify,#guestCodeRow').count(),0);
  for(const [name,value] of Object.entries({name:'Test reader',email:'guest@example.test',phone:'9000000000'}))await page.locator('#checkoutModal [name='+name+']').fill(value);
- await page.locator('.checkout-submit').click();await page.waitForFunction(()=>window.testCheckout);assert.equal(await page.evaluate(()=>testCheckout.options.mode),'production');assert.ok(writes.some(b=>b.action==='guest-start'));assert.ok(!writes.some(b=>b.action==='guest-otp'));assert.equal(writes.find(b=>b.action==='checkout').expectedAmount,19900);
- await page.keyboard.press('Escape');await page.setViewportSize({width:1366,height:768});await page.reload();await page.locator('#buyNowBtn').waitFor();await page.evaluate(()=>scrollTo(0,1800));await page.waitForTimeout(500);const bar=await page.locator('#mobilePurchaseBar').boundingBox();assert.ok(bar.width<=380);assert.ok(bar.y<768);assert.ok(Math.abs(bar.x+bar.width/2-683)<2);
- console.log('PASS: mobile sign-in height, no PRIME, existing-account switch, sticky banner, bottom dock, no-OTP guest checkout, production SDK and compact desktop buy bar');
+ await page.locator('.checkout-submit').click();await page.waitForFunction(()=>window.testCheckout);assert.equal(await page.evaluate(()=>testCheckout.options.mode),'production');assert.equal(await page.evaluate(()=>testCheckout.details.redirectTarget),'_modal');await page.locator('#checkoutModal.is-open').waitFor();assert.ok(page.url().includes('/BOOK-3/'));assert.match(await page.locator('[data-checkout-error]').textContent(),/closed/);assert.ok(writes.some(b=>b.action==='guest-start'));assert.ok(!writes.some(b=>b.action==='guest-otp'));assert.equal(writes.find(b=>b.action==='checkout').expectedAmount,19900);
+ await page.evaluate(()=>window.testGatewayResult={paymentDetails:{paymentMessage:'Attempt completed'}});await page.locator('.checkout-submit').click();await page.waitForURL('**/thankyou.html?order_id=*');
+ assert.equal(await page.locator('[data-state=success]:visible').count(),0,'SDK result does not unlock purchases');
+ await page.goto(origin+'/BOOK-3/index.html');await page.setViewportSize({width:1366,height:768});await page.reload();await page.locator('#buyNowBtn').waitFor();await page.evaluate(()=>scrollTo(0,1800));await page.waitForTimeout(500);const bar=await page.locator('#mobilePurchaseBar').boundingBox();assert.ok(bar.width<=380);assert.ok(bar.y<768);assert.ok(Math.abs(bar.x+bar.width/2-683)<2);
+ await page.evaluate(()=>scrollTo(0,0));const logo=page.locator('.brand img');await logo.waitFor();assert.equal(await logo.evaluate(el=>getComputedStyle(el).backgroundColor),'rgba(0, 0, 0, 0)');
+ assert.equal(await logo.evaluate(async el=>{await el.decode();const c=document.createElement('canvas');c.width=el.naturalWidth;c.height=el.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(el,0,0);return ctx.getImageData(0,0,1,1).data[3];}),0);
+ await page.screenshot({path:path.join(root,'../.bookivo-qa/new-logo-desktop.png')});
+ console.log('PASS: transparent logo, modal cancellation and completion verification; mobile sign-in height, no PRIME, existing-account switch, sticky banner, bottom dock, no-OTP guest checkout, production SDK and compact desktop buy bar');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>server.close());

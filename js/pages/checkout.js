@@ -82,6 +82,7 @@
     if(activeMode==='coupon'&&form.elements.coupon.value.trim()&&appliedCoupon!==form.elements.coupon.value.trim().toUpperCase()){B.Toast.show('Click Apply to verify your coupon before paying.','error');return;}
     const pricing=updatePricing();if(pricing.warnings.length){$('[data-checkout-error]').textContent=pricing.warnings.join(' ');return;}
     $('.checkout-submit').disabled=true;$('.checkout-submit').textContent='Creating secure checkout…';
+    let gatewayOpened=false;
     try {
       const details = {visitor:localStorage.bv_visitor,source:sessionStorage.bv_source,device:matchMedia('(max-width:760px)').matches?'Mobile':'Desktop',name,email,phone,books:currentItems.map(book=>book.id).sort(),
         bits:activeMode==='pages'?pricing.pagesUsed:0, coupon:activeMode==='coupon'?appliedCoupon:'',
@@ -91,9 +92,16 @@
       if(!['sandbox','production'].includes(result.mode))throw new Error('Payment configuration changed. Refresh and try again.');
       await loadCashfree();
       B.Track.event('PaymentStarted');
-      const gateway=await window.Cashfree({mode:result.mode}).checkout({paymentSessionId:result.session,redirectTarget:'_self'});
-      if(gateway?.error) throw new Error(gateway.error.message);
-    } catch(error) { $('[data-checkout-error]').textContent=error.message;B.Toast.show(error.message,'error'); }
+      // Release BOOKIVO's focus trap before Cashfree mounts its own payment dialog.
+      B.Modal.close(modal);gatewayOpened=true;
+      const gateway=await window.Cashfree({mode:result.mode}).checkout({paymentSessionId:result.session,redirectTarget:'_modal'});
+      if(gateway?.redirect)return;
+      // The Thank You page verifies the order on the server; SDK completion is not proof of payment.
+      if(gateway?.paymentDetails){location.assign(new URL('thankyou.html?order_id='+encodeURIComponent(result.id),document.baseURI));return;}
+      const status=await B.Api.orders.getStatus(result.id);
+      if(status?.status==='paid'){location.assign(new URL('thankyou.html?order_id='+encodeURIComponent(result.id),document.baseURI));return;}
+      throw new Error(gateway?.error?.message || 'Payment window closed. You can retry when ready.');
+    } catch(error) { if(gatewayOpened)B.Modal.open(modal);$('[data-checkout-error]').textContent=error.message;B.Toast.show(error.message,'error'); }
     finally { $('.checkout-submit').textContent='BUY NOW'; updateButton(); }
   }
   let sdk;
