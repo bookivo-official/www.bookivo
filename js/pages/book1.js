@@ -15,7 +15,10 @@
     const bookId = page.dataset.bookId || 'cookbook';
     const book = await B.Api.books.get(bookId);
     if (!book) throw new Error('This product is missing from the BOOKIVO catalog.');
-    const reviews = await B.Api.reviews.list(book.id);
+    const [reviews, canReview] = await Promise.all([
+      B.Api.reviews.list(book.id),
+      B.AuthStore.get() ? B.Api.orders.owns(book.id).catch(() => false) : false
+    ]);
     const rating = B.Rating.summary(reviews);
     const bookFolder = book.folder || 'BOOK-1';
     page.dataset.bookId = book.id;
@@ -57,7 +60,7 @@
       name: review.name,
       rating: review.rating
     }));
-    w.BookivoBookCanReview = !!B.AuthStore.get() && await B.Api.orders.owns(book.id);
+    w.BookivoBookCanReview = canReview;
     w.BookivoProduct=book;
     await loadBookPageScript(book.id==='book-3'?'BOOK-2':bookFolder);
     B.ProductOffer.bind(book,page.querySelector('.purchase-row'),page.querySelector('[data-book-price]'));

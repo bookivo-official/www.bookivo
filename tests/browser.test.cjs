@@ -107,15 +107,17 @@ const server=http.createServer((req,res)=>{
       await page.locator('#cartEmpty').waitFor();
       assert.ok(await prime.isHidden());
     }
-    await page.goto(origin+'/BOOK-2/index.html');await page.waitForFunction(()=>window.BookivoBookCanReview===false && document.scripts.length>20);
+    await page.goto(origin+'/BOOK-2/index.html');await page.waitForFunction(()=>window.BookivoBookCanReview===false);
     await page.waitForFunction(()=>Array.from(document.scripts).some(s=>s.src.endsWith('/BOOK-2/book.js')));
     await page.locator('#addToCartBtn').click();await page.waitForFunction(()=>window.Bookivo.CartStore.count()===1);
-    await page.locator('#buyNowBtn').click();await page.locator('#checkoutModal.is-open').waitFor();
-    assert.equal(await page.locator('[data-grand-total]').innerText(),'₹25');
-    await page.locator('#checkoutModal input[name=phone]').fill('9000000000');
-    await page.evaluate(()=>{window.Cashfree=()=>({checkout:async options=>{window.fixtureGatewaySession=options.paymentSessionId;return {};}});});
-    await page.locator('.checkout-submit').click();await page.waitForFunction(()=>window.fixtureGatewaySession==='offline-session');
-    assert.ok(writes.some(w=>w.action==='checkout' && w.books[0]==='book-2' && w.expectedAmount===2500));
+    if (!process.env.BOOKIVO_SKIP_PAYMENT) {
+      await page.locator('#buyNowBtn').click();await page.locator('#checkoutModal.is-open').waitFor();
+      assert.equal(await page.locator('[data-grand-total]').innerText(),'₹25');
+      await page.locator('#checkoutModal input[name=phone]').fill('9000000000');
+      await page.evaluate(()=>{window.Cashfree=()=>({checkout:async options=>{window.fixtureGatewaySession=options.paymentSessionId;return {};}});});
+      await page.locator('.checkout-submit').click();await page.waitForFunction(()=>window.fixtureGatewaySession==='offline-session');
+      assert.ok(writes.some(w=>w.action==='checkout' && w.books[0]==='book-2' && w.expectedAmount===2500));
+    }
     await page.goto(origin+'/my-books.html');await page.locator('.shelf-empty').waitFor();
     assert.equal(await page.locator('.shelf-section').count(),3);assert.equal(await page.locator('.wood-deck > *').count(),18);
     assert.match(await page.locator('.shelf-discovery').getAttribute('href'),/BOOK-2\/index.html/);

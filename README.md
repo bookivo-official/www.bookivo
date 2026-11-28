@@ -14,3 +14,4 @@ BOOKIVO is the existing HTML, CSS and JavaScript bookstore with a private Supaba
 
 Start with the [setup, file inventory, configuration table and launch checklist](docs/LAUNCH.md). The private ebook upload package is distributed separately to the store owner. Deploy only the storefront assets to the public host.
 
+After editing shared browser modules, run `node scripts/build-storefront.mjs` and commit the generated storefront script alongside the source changes.
